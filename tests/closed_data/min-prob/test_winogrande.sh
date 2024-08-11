@@ -18,7 +18,7 @@ python main.py \
 --eval_set_key test \
 --text_keys sentence+option1+option2+answer \
 --n_eval_data_points 100 \
---num_proc 0 \
+--num_proc 16 \
 --method min-prob \
 --local_port $port \
 --model_name $model_name \

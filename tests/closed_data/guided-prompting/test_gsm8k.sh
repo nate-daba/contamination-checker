@@ -20,7 +20,7 @@ python main.py \
 --text_key question \
 --label_key answer \
 --n_eval_data_points 100 \
---num_proc 40 \
+--num_proc 16 \
 --method guided-prompting \
 --local_port $port \
 --model_name $model_name \

@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument("--stream_buffer_size", type = int, default=1000,
                         help="Buffer size for streaming over training set. Only used if --stream_train_data is passed.")
     parser.add_argument("--num_proc", type=int, default=16,
-                        help="Recommend: 20 for openai calls, 80 for local calls")
+                        help="Number of threads for multi-processing")
     parser.add_argument("--method", type=str, choices=supported_methods.keys(),
                         help="you must pass a method name within the list supported_methods")
     parser.add_argument("--log_file_path", type=str, default="log.txt",

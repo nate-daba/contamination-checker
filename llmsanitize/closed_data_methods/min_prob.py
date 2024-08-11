@@ -157,7 +157,7 @@ def _process_fn(x):
 
 def main_min_prob(
     eval_data: list = [],
-    num_proc: int = 8,
+    num_proc: int = 16,
     output_dir: str = "output",
     # closed_data parameters
     local_model_path: str = None,

@@ -133,7 +133,7 @@ def main_guided_prompting(
     eval_set_key: str = "test",
     text_key: str = "text",
     label_key: str = "label",
-    num_proc: int = 1,
+    num_proc: int = 16,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,
