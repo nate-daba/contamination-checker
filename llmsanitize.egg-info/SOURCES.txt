@@ -4,8 +4,8 @@ setup.cfg
 setup.py
 llmsanitize/__init__.py
 llmsanitize/base_contamination_checker.py
-llmsanitize/data_contamination_checker.py
-llmsanitize/model_contamination_checker.py
+llmsanitize/closed_data_contamination_checker.py
+llmsanitize/open_data_contamination_checker.py
 llmsanitize.egg-info/PKG-INFO
 llmsanitize.egg-info/SOURCES.txt
 llmsanitize.egg-info/dependency_links.txt
@@ -22,6 +22,7 @@ llmsanitize/closed_data_methods/ts_guessing_question_based.py
 llmsanitize/closed_data_methods/ts_guessing_question_multichoice.py
 llmsanitize/configs/__init__.py
 llmsanitize/configs/config.py
+llmsanitize/configs/main_config.yaml
 llmsanitize/open_data_methods/__init__.py
 llmsanitize/open_data_methods/exact.py
 llmsanitize/open_data_methods/gpt2.py

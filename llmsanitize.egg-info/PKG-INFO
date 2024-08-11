@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: llmsanitize
-Version: 0.0.1
+Version: 0.0.7
 Summary: LLMSanitize: a package to detect contamination in LLMs
 Home-page: https://github.com/ntunlp/LLMSanitize
 Author: Mathieu Ravaut (NTU-NLP lab)
@@ -41,14 +41,9 @@ Next activate the environment:
 conda activate llmsanitize
 ```
 
-Then install all the dependencies for LLMSanitize:
+Then install LLMSanitize from PyPI:
 ```bash
-pip install -r requirements.txt
-```
-
-Alternatively, you can combine the three steps above by just running:  
-```bash
-sh scripts/install.sh
+pip install llmsanitize
 ```
 
 Notably, we use **vllm 0.3.3**.  

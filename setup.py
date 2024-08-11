@@ -21,7 +21,7 @@ install_requires = [
 
 setup(
     name='llmsanitize',
-    version='0.0.3',
+    version='0.0.7',
     author='Mathieu Ravaut (NTU-NLP lab)',
     description='LLMSanitize: a package to detect contamination in LLMs',
     long_description=open('README.md').read(),
@@ -29,6 +29,7 @@ setup(
     license="Apache 2.0",
     url='https://github.com/ntunlp/LLMSanitize',
     packages=find_packages(),
+    package_data={'llmsanitize': ['configs/main_config.yaml']},
     install_requires=install_requires,
     include_package_data=True,
     zip_safe=False,

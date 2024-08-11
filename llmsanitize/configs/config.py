@@ -1,4 +1,4 @@
-import json
+import yaml
 import torch
 from pathlib import Path
 from dataclasses import dataclass
@@ -10,8 +10,9 @@ logger = get_child_logger("config")
 
 
 # Read yaml config for variable configs (configuration that can change frequently)
-with open(Path(__file__).parent / 'main_config.json', 'r') as rf:
-    config_dict = json.load(rf)
+with open(Path(__file__).parent / 'main_config.yaml', 'r') as rf:
+    config_dict = yaml.safe_load(rf)
+    config = dict_to_object(config_dict)
     logger.info(config_dict)
 
 supported_methods = {dic['name']: dic for dic in config_dict['methods']}
