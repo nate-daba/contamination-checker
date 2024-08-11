@@ -86,16 +86,16 @@ def parse_args():
     ### Method #1: Guided prompting
     parser.add_argument("--guided_prompting_task_type", choices=["CLS", "QA", "FIM", "NLI", "SUM", "XSUM"],
                         help="For guided-prompting: set task type to either {classification, open-QA, NLI, summarization, extreme-summarization}")
-    ### Method #2: Sharded likelihood
-    parser.add_argument("--sharded_likelihood_context_len", type=int, default=1024,
-                        help="For sharded-likelihood: set context length")
-    parser.add_argument("--sharded_likelihood_stride", type=int, default=512,
-                        help="For sharded-likelihood: set stride length")
-    parser.add_argument("--sharded_likelihood_num_shards", type=int, default=15,
-                        help="For sharded-likelihood: set number of shards")
-    parser.add_argument("--sharded_likelihood_permutations_per_shard", type=int, default=25,
-                        help="For sharded-likelihood: set number of permutations per shard")
-    parser.add_argument("--sharded_likelihood_mp_prawn", action='store_true', default=False)
+    # ### Method #2: Sharded likelihood
+    # parser.add_argument("--sharded_likelihood_context_len", type=int, default=1024,
+    #                     help="For sharded-likelihood: set context length")
+    # parser.add_argument("--sharded_likelihood_stride", type=int, default=512,
+    #                     help="For sharded-likelihood: set stride length")
+    # parser.add_argument("--sharded_likelihood_num_shards", type=int, default=15,
+    #                     help="For sharded-likelihood: set number of shards")
+    # parser.add_argument("--sharded_likelihood_permutations_per_shard", type=int, default=25,
+    #                     help="For sharded-likelihood: set number of permutations per shard")
+    # parser.add_argument("--sharded_likelihood_mp_prawn", action='store_true', default=False)
     ### Method #3: Min-K-Prob
     parser.add_argument("--minkprob_openai_creds_key_file_2", type=str, default=None,
                         help="OpenAI API key file path.")

@@ -120,8 +120,8 @@ def main_sharded_likelihood(
     # method-specific parameters
     context_len: int = 2048,
     stride: int = 1024,
-    num_shards: int = 50,
-    permutations_per_shard: int = 250,
+    num_shards: int = 15,
+    permutations_per_shard: int = 25,
 ):
     os.environ['TOKENIZERS_PARALLELISM'] = "True"
     flatten = lambda l : [x for s in l for x in s]
