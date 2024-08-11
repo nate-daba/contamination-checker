@@ -1,2 +1,3 @@
+from llmsanitize.base_contamination_checker import BaseContaminationChecker
 from llmsanitize.open_data_contamination_checker import OpenDataContaminationChecker
 from llmsanitize.closed_data_contamination_checker import ClosedDataContaminationChecker

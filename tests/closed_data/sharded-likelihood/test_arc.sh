@@ -15,7 +15,7 @@ python main.py \
 --eval_set_key test \
 --text_keys question+choices+answerKey \
 --n_eval_data_points 100 \
---num_proc 0 \
+--num_proc 16 \
 --method sharded-likelihood \
 --model_name $model_name \
 --sharded_likelihood_context_len 1024 \
