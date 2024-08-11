@@ -40,7 +40,7 @@ def parse_args():
                         help="Whether to stream over the training dataset (helpful for large datasets like C4)")
     parser.add_argument("--stream_buffer_size", type = int, default=1000,
                         help="Buffer size for streaming over training set. Only used if --stream_train_data is passed.")
-    parser.add_argument("--num_proc", type=int, default=20,
+    parser.add_argument("--num_proc", type=int, default=16,
                         help="Recommend: 20 for openai calls, 80 for local calls")
     parser.add_argument("--method", type=str, choices=supported_methods.keys(),
                         help="you must pass a method name within the list supported_methods")
