@@ -14,14 +14,9 @@ Next activate the environment:
 conda activate llmsanitize
 ```
 
-Then install all the dependencies for LLMSanitize:
+Then install LLMSanitize from PyPI:
 ```bash
-pip install -r requirements.txt
-```
-
-Alternatively, you can combine the three steps above by just running:  
-```bash
-sh scripts/install.sh
+pip install llmsanitize
 ```
 
 Notably, we use **vllm 0.3.3**.  
