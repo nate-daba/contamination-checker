@@ -29,11 +29,13 @@ def calculate_openai_cost(engine_name, usage_dict):
 
     return input_price * (usage_dict['prompt_tokens'] / 1000.) + output_price * (usage_dict['completion_tokens'] / 1000.)
 
+
 def initialize_openai(config):
     with open(config.openai.creds_key_file, 'r') as rf:
         api_key = rf.read()
     api_key = api_key.strip()
     openai.api_key = api_key
+
 
 def query_llm_openai(config, prompt):
     # prepare the prompt to the chat mode

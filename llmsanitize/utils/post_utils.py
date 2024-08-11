@@ -48,6 +48,7 @@ def post_http_request(
 
     return response
 
+
 def query_llm_post(config, prompt):
     # Prepare the prompt to the chat template
     # If you are using a chat closed_data, then we recommend using the template.

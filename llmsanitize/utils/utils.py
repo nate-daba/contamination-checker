@@ -19,6 +19,7 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
 
+
 def dict_to_object(dict_):
     class Struct(object):
         def __init__(self, data):
@@ -32,6 +33,7 @@ def dict_to_object(dict_):
                 return Struct(value) if isinstance(value, dict) else value
 
     return Struct(dict_)
+
 
 def fill_template(template, vars_map):
     ''' vars_map: {"var_name_in_template": actual_var}

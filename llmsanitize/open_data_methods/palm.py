@@ -13,14 +13,14 @@ logger = get_child_logger("palm")
 
 
 def main_palm(
-    train_data,
-    eval_data,
-    train_data_name,
-    eval_data_name,
-    eval_set_key,
-    stream_train_data=False,
-    text_key=None,
-    text_keys=None
+    train_data: list = [],
+    eval_data: list = [],
+    train_data_name: str = None,
+    eval_data_name: str = None,
+    eval_set_key: str = None,
+    stream_train_data: bool = False,
+    text_key: bool = None,
+    text_keys: bool = None
 ):
     eval_data = eval_data["text"]
 
@@ -29,11 +29,21 @@ def main_palm(
         train_data = train_data["text"]
         train_ngrams = build_ngrams(train_data, ngram_size)
     else:
-        train_ngrams = build_ngrams_streaming(train_data, ngram_size, text_processing_method=None, text_key=text_key, text_keys=text_keys)
+        train_ngrams = build_ngrams_streaming(
+            train_data,
+            ngram_size,
+            text_processing_method=None,
+            text_key=text_key,
+            text_keys=text_keys
+        )
     logger.info(f"There are {len(train_ngrams.keys())} {ngram_size}-grams strings in the training set")
 
     overlap_thresh = 70
-    ngram_overlaps = overlap_ngrams(eval_data, train_ngrams, ngram_size, None)
+    ngram_overlaps = overlap_ngrams(
+        eval_data,
+        train_ngrams,
+        ngram_size,
+    )
 
     overlaps = np.array([100 * x[0] / x[1] for x in ngram_overlaps])
     contaminated = np.array([int(x >= overlap_thresh) for x in overlaps])

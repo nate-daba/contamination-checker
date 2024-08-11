@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import warnings
+from functools import wraps
 
 warnings.filterwarnings("ignore", category=RuntimeWarning) 
 
@@ -45,7 +46,6 @@ def setting_logger(log_file: str, local_rank: int = -1):
 
     return logger
 
-from functools import wraps
 
 def suspend_logging(func):
     ''' decorator to supress logging for a code block (https://stackoverflow.com/questions/7341064/disable-logging-per-method-function)

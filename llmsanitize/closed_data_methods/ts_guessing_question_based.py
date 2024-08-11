@@ -29,6 +29,7 @@ def get_stanford_tagger():
 
     return st
 
+
 def build_prompt(
     example, 
     tagger,
@@ -67,10 +68,12 @@ def build_prompt(
 
     return prompt, word
 
+
 def process_response(response):
     processed_response = word_tokenize(response)[0]
 
     return processed_response
+
 
 def inference(
     data_points, 
@@ -105,10 +108,7 @@ def inference(
     return responses, masked_words
 
 @suspend_logging
-def filter_data(
-    eval_data,
-    eval_data_name
-):
+def filter_data(eval_data, eval_data_name):
     data_points = []
     if eval_data_name == "truthful_qa":
         for x in tqdm(eval_data):
@@ -154,10 +154,11 @@ def filter_data(
 
     return data_points
 
+
 def main_ts_guessing_question_based(
-    eval_data,
-    eval_data_name,
-    n_eval_data_points,
+    eval_data: list = [],
+    eval_data_name: str = None,
+    n_eval_data_points: int = 100,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,

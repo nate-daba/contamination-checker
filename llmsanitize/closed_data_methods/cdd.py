@@ -28,6 +28,7 @@ def get_ed(a, b):
         
         return int(dist[-1, -1])
 
+
 def get_peak(samples, s_0, alpha):
     lengths = [len(x) for x in samples]
     l = min(lengths)
@@ -38,6 +39,7 @@ def get_peak(samples, s_0, alpha):
     peak = sum(rhos)
 
     return peak
+
 
 def inference(
     eval_data,
@@ -64,8 +66,9 @@ def inference(
 
     return cdd_results
 
+
 def main_cdd(
-    eval_data,
+    eval_data: list = [],
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,

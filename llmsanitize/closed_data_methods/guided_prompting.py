@@ -19,7 +19,12 @@ from scipy.stats import bootstrap
 logger = get_child_logger("guided_prompting")
 
 
-def guided_prompt_split_fn(example, idx, dataset_name, text_key):
+def guided_prompt_split_fn(
+    example,
+    idx,
+    dataset_name,
+    text_key
+):
     ''' split content per example to part 1 and part 2
         For AGnews: split ['text'] into 2 parts
             ARC: split ['question']+['choices']
@@ -59,6 +64,7 @@ def guided_prompt_split_fn(example, idx, dataset_name, text_key):
 
     return splits
 
+
 def guided_prompt_process_label(example, dataset_name):
     if dataset_name == 'cais/mmlu':
         example['answer_text'] = example['choices'][int(example['answer'])]
@@ -66,6 +72,7 @@ def guided_prompt_process_label(example, dataset_name):
         example['answer_token'] = example['option1'] + '/' + example['option2']
     
     return example
+
 
 def bootstrap_test(data):
     ''' bootstrap test (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html)
@@ -78,6 +85,7 @@ def bootstrap_test(data):
     res = bootstrap((data,), np.mean, n_resamples=10000)
 
     return (res.bootstrap_distribution <= 0.).sum() / 10000.
+
 
 @suspend_logging
 def guided_prompt_process_fn(
@@ -118,13 +126,14 @@ def guided_prompt_process_fn(
 
     return example
 
+
 def main_guided_prompting(
-    eval_data,
-    eval_data_name,
-    eval_set_key,
-    text_key,
-    label_key,
-    num_proc,
+    eval_data: list = [],
+    eval_data_name: str = None,
+    eval_set_key: str = "test",
+    text_key: str = "text",
+    label_key: str = "label",
+    num_proc: int = 1,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,

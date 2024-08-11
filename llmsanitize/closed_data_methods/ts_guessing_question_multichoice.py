@@ -16,10 +16,7 @@ from llmsanitize.closed_data_methods.ts_guessing_question_based import filter_da
 logger = get_child_logger("ts_guessing_question_multichoice")
 
 
-def build_prompt(
-    example,
-    eval_data_name
-):
+def build_prompt(example,eval_data_name):
     text = example["text"]
 
     choices = get_answers_list(example, eval_data_name)
@@ -47,6 +44,7 @@ def build_prompt(
 
     return prompt, answer, wrong_letter
 
+
 def process_response(response, wrong_letter):
     symbol = wrong_letter + ":"
     if symbol in response:
@@ -57,11 +55,8 @@ def process_response(response, wrong_letter):
 
     return response
 
-def inference(
-    data_points,
-    eval_data_name,
-    llm
-):
+
+def inference(data_points, eval_data_name, llm):
     responses, answers = [], []
     for example in tqdm(data_points):
         prompt, answer, wrong_letter = build_prompt(
@@ -75,10 +70,11 @@ def inference(
 
     return responses, answers
 
+
 def main_ts_guessing_question_multichoice(
-    eval_data,
-    eval_data_name,
-    n_eval_data_points,
+    eval_data: list = [],
+    eval_data_name: str = None,
+    n_eval_data_points: int = 100,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,

@@ -41,6 +41,7 @@ def sweep(score, x):
 
     return fpr, tpr, auc(fpr, tpr), acc
 
+
 def do_plot(
     prediction,
     answers,
@@ -67,6 +68,7 @@ def do_plot(
     plt.plot(fpr, tpr, label=legend + metric_text)
 
     return legend, auc, acc, low
+
 
 def fig_fpr_tpr(all_output, output_dir, do_infer: bool = False):
     logger.info(f"Min-Prob method output_dir: {output_dir}")
@@ -102,6 +104,7 @@ def fig_fpr_tpr(all_output, output_dir, do_infer: bool = False):
     plt.legend(fontsize=8)
     plt.savefig(f"{output_dir}/auc.png")
 
+
 def calculate_perplexity(prompt, llm: LLM):
     prompt = prompt.replace('\x00', '')
     _, responses, _ = llm.query(prompt, return_full_response=True)
@@ -110,6 +113,7 @@ def calculate_perplexity(prompt, llm: LLM):
     p1 = np.exp(-np.mean(all_prob))
 
     return p1, all_prob, np.mean(all_prob)
+
 
 def inference(llm1: LLM, llm2: LLM, _input):
     text = _input["text"]
@@ -140,16 +144,19 @@ def inference(llm1: LLM, llm2: LLM, _input):
 
     return _input
 
+
 def _client_init(llm1, llm2):
     global LLM1, LLM2
     LLM1 = llm1
     LLM2 = llm2
 
+
 def _process_fn(x):
     return inference(LLM1, LLM2, x)
 
+
 def main_min_prob(
-    eval_data,
+    eval_data: list = [],
     num_proc: int = 8,
     output_dir: str = "output",
     # closed_data parameters

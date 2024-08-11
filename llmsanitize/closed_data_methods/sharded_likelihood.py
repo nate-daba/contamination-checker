@@ -35,6 +35,7 @@ def _load_dataset(dataset_path):
 
     return lines
 
+
 def _compute_logprob_of_token_sequence(
     tokens,
     model,
@@ -75,6 +76,7 @@ def _compute_logprob_of_token_sequence(
 
     return logp.item()
 
+
 def _worker(
     model_name,
     context_len,
@@ -109,8 +111,9 @@ def _worker(
 
     del m
 
+
 def main_sharded_likelihood(
-    eval_data,
+    eval_data: list = [],
     log_file_path: str = None,
     # closed_data parameters
     model_name: str = None,

@@ -8,20 +8,21 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from llmsanitize.utils.string_utils_streaming import *
+from llmsanitize.utils.embeddings_utils import build_embeddings_streaming
 from llmsanitize.utils.logger import get_child_logger
 
 logger = get_child_logger("platypus")
 
 
 def main_platypus(
-    train_data,
-    eval_data,
-    train_data_name,
-    eval_data_name,
-    eval_set_key,
-    stream_train_data=False,
-    text_key=None,
-    text_keys=None
+    train_data: list = [],
+    eval_data: list = [],
+    train_data_name: str = None,
+    eval_data_name: str = None,
+    eval_set_key: str = None,
+    stream_train_data: bool = False,
+    text_key: bool = None,
+    text_keys: bool = None
 ):
     eval_data = eval_data["text"]
 

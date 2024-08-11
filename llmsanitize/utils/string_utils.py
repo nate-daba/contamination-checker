@@ -23,27 +23,6 @@ def build_ngrams(data, ngram_size, text_processing_method=None):
 
     return set_ngrams
 
-# find ngrams in eval dataset which have been seen before
-def overlap_ngrams(data, ngrams_set, ngram_size, text_processing_method=None):
-    overlaps = []
-    for i in tqdm(range(len(data))):
-        text_i = data[i]
-        clean_text_i = text_i
-        if text_processing_method != None:
-            clean_text_i = text_processing_method(text_i)
-        words = word_tokenize(clean_text_i)
-        if len(words) < ngram_size:
-            continue
-        ngrams_i = ngrams(sequence=words, n=ngram_size)
-        found, count = 0, 0
-        for ngram in ngrams_i:
-            if ngram in ngrams_set.keys():
-                found += 1
-            count += 1
-        overlap = (found, count)
-        overlaps.append(overlap)
-
-    return overlaps
 
 # collect all full string samples
 def build_full_strings(data, text_processing_method=None):
@@ -57,6 +36,7 @@ def build_full_strings(data, text_processing_method=None):
         set_strings[clean_text_i] = 0
 
     return set_strings
+
 
 # collect all unique strings of size string_size
 def build_substrings(data, string_size, text_processing_method=None):
@@ -81,8 +61,43 @@ def build_substrings(data, string_size, text_processing_method=None):
 
     return set_strings
 
-# compute the fraction of strings which have been seen before
-def overlap_substrings_sample(data, strings_set, string_size, n_samples, text_processing_method=None):
+
+# find ngrams in eval dataset which have been seen before
+def overlap_ngrams(
+    data,
+    ngrams_set,
+    ngram_size,
+    text_processing_method=None
+):
+    overlaps = []
+    for i in tqdm(range(len(data))):
+        text_i = data[i]
+        clean_text_i = text_i
+        if text_processing_method != None:
+            clean_text_i = text_processing_method(text_i)
+        words = word_tokenize(clean_text_i)
+        if len(words) < ngram_size:
+            continue
+        ngrams_i = ngrams(sequence=words, n=ngram_size)
+        found, count = 0, 0
+        for ngram in ngrams_i:
+            if ngram in ngrams_set.keys():
+                found += 1
+            count += 1
+        overlap = (found, count)
+        overlaps.append(overlap)
+
+    return overlaps
+
+
+# find strings which have been seen before
+def overlap_substrings_sample(
+    data,
+    strings_set,
+    string_size,
+    n_samples,
+    text_processing_method=None
+):
     all_tagged = []
     for i in tqdm(range(len(data))):
         text_i = data[i]

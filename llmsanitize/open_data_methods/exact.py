@@ -21,15 +21,16 @@ def clean_text_exact(text):
 
     return text
 
+
 def main_exact(
-    train_data,
-    eval_data,
-    train_data_name,
-    eval_data_name,
-    eval_set_key,
-    stream_train_data=False,
-    text_key=None,
-    text_keys=None
+    train_data: list = [],
+    eval_data: list = [],
+    train_data_name: str = None,
+    eval_data_name: str = [],
+    eval_set_key: str = [],
+    stream_train_data: bool = False,
+    text_key: bool = None,
+    text_keys: bool = None
 ):
     eval_data = eval_data["text"]
 
@@ -37,7 +38,12 @@ def main_exact(
         train_data = train_data["text"]
         train_strings = build_full_strings(train_data, clean_text_exact)
     else:
-        train_strings = build_full_strings_streaming(train_data, clean_text_exact, text_key, text_keys)
+        train_strings = build_full_strings_streaming(
+            train_data,
+            clean_text_exact,
+            text_key,
+            text_keys
+        )
 
     contaminated = []
     for i in tqdm(range(len(eval_data))):

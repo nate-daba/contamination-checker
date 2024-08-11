@@ -21,15 +21,16 @@ def clean_text_gpt2(text):
 
     return text
 
+
 def main_gpt2(
-    train_data,
-    eval_data,
-    train_data_name,
-    eval_data_name,
-    eval_set_key,
-    stream_train_data=False,
-    text_key=None,
-    text_keys=None
+    train_data: list = [],
+    eval_data: list = [],
+    train_data_name: str = None,
+    eval_data_name: str = None,
+    eval_set_key: str = None,
+    stream_train_data: bool =False,
+    text_key: bool = None,
+    text_keys: bool = None
 ):
     eval_data = eval_data["text"]
 
@@ -38,10 +39,21 @@ def main_gpt2(
         train_data = train_data["text"]
         train_ngrams = build_ngrams(train_data, ngram_size, clean_text_gpt2)
     else:
-        train_ngrams = build_ngrams_streaming(train_data, ngram_size, clean_text_gpt2, text_key, text_keys)
+        train_ngrams = build_ngrams_streaming(
+            train_data,
+            ngram_size,
+            clean_text_gpt2,
+            text_key,
+            text_keys
+        )
     logger.info(f"There are {len(train_ngrams.keys())} {ngram_size}-grams in the training set")
 
-    ngram_overlaps = overlap_ngrams(eval_data, train_ngrams, ngram_size, clean_text_gpt2)
+    ngram_overlaps = overlap_ngrams(
+        eval_data,
+        train_ngrams,
+        ngram_size,
+        clean_text_gpt2
+    )
 
     contaminated = np.array([int(x[0] > 0) for x in ngram_overlaps])
     frac = 100 * np.mean(contaminated)
