@@ -19,6 +19,7 @@ def initialize_post(config):
     openai.api_key = "EMPTY"
     openai.api_base = f"http://127.0.0.1:{config.local.port}/v1"
 
+
 def post_http_request(
     prompt: str,
     api_url: str,
