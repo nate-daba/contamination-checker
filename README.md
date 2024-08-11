@@ -57,7 +57,7 @@ sh llmsanitize/scripts/vllm_hosting.sh
 You are required to specify a **port number** and **model name** in this shell script. 
 
 ## Run Contamination Detection
-To run contamination detection, follow the multiple test scripts in scripts/tests/ folder.  
+To run contamination detection, you can follow the multiple test scripts in scripts/tests/ folder.  
 
 For instance, to run sharded-likelihood on Hellaswag with Llama-2-7B:
 ```bash
@@ -67,6 +67,14 @@ sh llmsanitizescripts/tests/closed_data/sharded-likelihood/test_hellaswag.sh -m 
 To run a method using vLLM like guided-prompting for instance, the only difference is to pass the port number as argument:
 ```bash
 sh llmsanitizescripts/tests/closed_data/guided-prompting/test_hellaswag.sh -m <path_to_your_llama-2-7b_folder> -p <port_number_from_your_vllm_instance>
+```
+
+Or, since *llmsanitize* has been installed as a Python package, you can call the detection methods directly in your Python script:
+```
+from llmsanitize ClosedDataContaminationChecker
+args = <setup your argparse here>
+contamination_checker = ClosedDataContaminationChecker(args)
+contamination_checker.run_contamination("guided-prompting") # make sure that your args contain all parameters relevant this specific method
 ```
 
 
