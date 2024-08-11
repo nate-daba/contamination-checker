@@ -21,7 +21,7 @@ install_requires = [
 
 setup(
     name='llmsanitize',
-    version='0.0.1',
+    version='0.0.3',
     author='Mathieu Ravaut (NTU-NLP lab)',
     description='LLMSanitize: a package to detect contamination in LLMs',
     long_description=open('README.md').read(),
