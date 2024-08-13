@@ -8,7 +8,7 @@ from tqdm import tqdm
 from functools import partial
 
 from llmsanitize.closed_data_methods.llm import LLM
-from llmsanitize.utils.logger import get_child_logger
+from llmsanitize.utils.logger import get_child_logger, suspend_logging
 
 logger = get_child_logger("cdd")
 
@@ -61,8 +61,9 @@ def inference(
 
     peak = get_peak(samples, s_0, alpha)
     leaked = int(peak > xi)
+    data_point["leaked"] = leaked
 
-    return leaked
+    return data_point
 
 
 def main_cdd(
@@ -137,11 +138,9 @@ def main_cdd(
 
     cdd_results = eval_data.map(
         process_fn,
-        with_indices=True,
         num_proc=num_proc,
-        features=features,
-        load_from_cache_file=False
     )
+    cdd_results = [x["leaked"] for x in cdd_results]
     cdd_results = np.array(cdd_results)
 
     contaminated_frac = 100 * np.mean(cdd_results)

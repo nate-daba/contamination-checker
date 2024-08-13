@@ -19,7 +19,7 @@ python main.py \
 --text_key question \
 --label_key answerKey \
 --n_eval_data_points 100 \
---num_proc 1 \
+--num_proc 16 \
 --method cdd \
 --model_name $model_name \
 --local_port $port \
