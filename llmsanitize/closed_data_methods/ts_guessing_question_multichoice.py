@@ -4,11 +4,14 @@ https://arxiv.org/pdf/2311.09783
 """
 
 import os
+os.environ["CLASSPATH"]="/data/mathieu/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
+os.environ["STANFORD_MODELS"]="/data/mathieu/stanford-postagger-full-2020-11-17/models"
 import numpy as np
 from tqdm import tqdm
 from rouge_score import rouge_scorer
 from nltk.tokenize import word_tokenize, sent_tokenize
 from functools import partial
+from datasets import Dataset
 
 from llmsanitize.utils.logger import get_child_logger, suspend_logging
 from llmsanitize.utils.dataset_utils import get_answers_list, get_answer_index
@@ -61,13 +64,15 @@ def process_response(response, wrong_letter):
 @suspend_logging
 def inference(data_point, eval_data_name, llm):
     prompt, answer, wrong_letter = build_prompt(
-        example,
+        data_point,
         eval_data_name
     )
     response, cost = llm.query(prompt)
     response = process_response(response, wrong_letter)
     data_point["answer"] = answer
     data_point["response"] = response
+
+    return data_point
 
 
 def main_ts_guessing_question_multichoice(
@@ -102,7 +107,8 @@ def main_ts_guessing_question_multichoice(
         data_points = [data_points[x] for x in p]
         data_points = data_points[:n_eval_data_points]
         logger.info(f"We are left with {len(data_points)} data points after subsampling")
-
+    data_points = Dataset.from_list(data_points)
+    
     llm = LLM(
         local_model_path=local_model_path,
         local_tokenizer_path=local_tokenizer_path,
@@ -127,7 +133,7 @@ def main_ts_guessing_question_multichoice(
         llm=llm,
     )
 
-    ts_guessing_results = eval_data.map(process_fn, num_proc=num_proc)
+    ts_guessing_results = data_points.map(process_fn, num_proc=num_proc)
     answers = [x["answer"].lower() for x in ts_guessing_results]
     responses = [x["response"].lower() for x in ts_guessing_results]
     em = len([i for i in range(len(responses)) if responses[i] == answers[i]]) / len(responses)

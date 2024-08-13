@@ -19,6 +19,7 @@ python main.py \
 --text_key sentence \
 --label_key answer_token \
 --n_eval_data_points 100 \
+--num_proc 16 \
 --method ts-guessing-question-multichoice \
 --local_port $port \
 --model_name $model_name

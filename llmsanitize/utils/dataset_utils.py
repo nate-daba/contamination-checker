@@ -20,7 +20,10 @@ def get_answer_index(data_point, dataset_name):
     alphabet = "abcdefghijklmnopqrstuvwxyz"
     if dataset_name == "allenai/ai2_arc":
         key = data_point["answerKey"].lower()
-        answer_index = alphabet.index(key)
+        if key in ["1", "2", "3", "4"]:
+            answer_index = int(key)-1
+        else:
+            answer_index = alphabet.index(key)
     if dataset_name == "Rowan/hellaswag":
         answer_index = int(data_point["label"])
     if dataset_name == "cais/mmlu":

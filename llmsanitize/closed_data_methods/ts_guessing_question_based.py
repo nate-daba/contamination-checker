@@ -4,12 +4,15 @@ https://arxiv.org/pdf/2311.09783
 """
 
 import os
+os.environ['CLASSPATH']="/data/mathieu/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
+os.environ["STANFORD_MODELS"]="/data/mathieu/stanford-postagger-full-2020-11-17/models"
 import numpy as np
 from tqdm import tqdm
 from rouge_score import rouge_scorer
 from nltk.tokenize import word_tokenize
 from nltk.tag import StanfordPOSTagger
 from functools import partial
+from datasets import Dataset 
 
 from llmsanitize.utils.logger import get_child_logger, suspend_logging
 from llmsanitize.utils.dataset_utils import get_answers_list
@@ -88,14 +91,14 @@ def inference(
     tagger = get_stanford_tagger()
 
     prompt, masked_word = build_prompt(
-        example,
+        data_point,
         tagger,
         eval_data_name,
         type_hint,
         category_hint,
         url_hint
     )
-    data_point["masked_wor"] = masked_word
+    data_point["masked_word"] = masked_word
     if prompt == "failed":
         data_point["response"] = "failed"
     else:
@@ -188,6 +191,7 @@ def main_ts_guessing_question_based(
     if n_eval_data_points > 0:
         p = np.random.permutation(len(data_points))
         data_points = [data_points[x] for x in p]
+    data_points = Dataset.from_list(data_points)
 
     llm = LLM(
         local_model_path=local_model_path,
@@ -216,7 +220,10 @@ def main_ts_guessing_question_based(
         url_hint=False
     )
 
-    ts_guessing_results = eval_data.map(process_fn, num_proc=num_proc)
+    ts_guessing_results = data_points.map(process_fn, num_proc=num_proc)
+    ts_guessing_results = [x for x in ts_guessing_results if x["response"] != "failed"]
+    ts_guessing_results = ts_guessing_results[:n_eval_data_points]
+
     masked_words = [x["masked_word"].lower() for x in ts_guessing_results]
     responses = [x["response"].lower() for x in ts_guessing_results]
     em = len([i for i in range(len(responses)) if responses[i] == masked_words[i]]) / len(responses)
