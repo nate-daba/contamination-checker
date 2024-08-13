@@ -9,6 +9,8 @@ from tqdm import tqdm
 from rouge_score import rouge_scorer
 from nltk.tokenize import word_tokenize
 from nltk.tag import StanfordPOSTagger
+from functools import partial
+
 from llmsanitize.utils.logger import get_child_logger, suspend_logging
 from llmsanitize.utils.dataset_utils import get_answers_list
 from llmsanitize.closed_data_methods.llm import LLM
@@ -76,8 +78,7 @@ def process_response(response):
 
 
 def inference(
-    data_points, 
-    n_eval, 
+    data_point,
     eval_data_name,
     llm, 
     type_hint=False,
@@ -86,26 +87,24 @@ def inference(
 ):
     tagger = get_stanford_tagger()
 
-    responses, masked_words = [], []
-    for example in tqdm(data_points):
-        prompt, masked_word = build_prompt(
-            example, 
-            tagger,
-            eval_data_name,
-            type_hint,
-            category_hint,
-            url_hint
-        )
-        if prompt == "failed":
-            continue
+    prompt, masked_word = build_prompt(
+        example,
+        tagger,
+        eval_data_name,
+        type_hint,
+        category_hint,
+        url_hint
+    )
+    data_point["masked_wor"] = masked_word
+    if prompt == "failed":
+        data_point["response"] = "failed"
+    else:
         response, cost = llm.query(prompt)
         response = process_response(response)
-        responses.append(response)
-        masked_words.append(masked_word)
-        if len(responses) == n_eval:
-            break
+        data_point["response"] = response
 
-    return responses, masked_words
+    return data_point
+
 
 @suspend_logging
 def filter_data(eval_data, eval_data_name):
@@ -159,6 +158,7 @@ def main_ts_guessing_question_based(
     eval_data: list = [],
     eval_data_name: str = None,
     n_eval_data_points: int = 100,
+    num_proc: int = 16,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,
@@ -207,18 +207,18 @@ def main_ts_guessing_question_based(
         echo=echo,
     )
 
-    responses, masked_words = inference(
-        data_points, 
-        n_eval_data_points,
-        eval_data_name,
-        llm, 
-        type_hint,
-        category_hint,
-        url_hint
+    process_fn = partial(
+        inference,
+        eval_data_name=eval_data_name,
+        llm=llm,
+        type_hint=False,
+        category_hint=False,
+        url_hint=False
     )
-    
-    responses = [x.lower() for x in responses]
-    masked_words = [x.lower() for x in masked_words]
+
+    ts_guessing_results = eval_data.map(process_fn, num_proc=num_proc)
+    masked_words = [x["masked_word"].lower() for x in ts_guessing_results]
+    responses = [x["response"].lower() for x in ts_guessing_results]
     em = len([i for i in range(len(responses)) if responses[i] == masked_words[i]]) / len(responses)
     logger.info(f"Question-based completion (type hint: {type_hint} | category hint: {category_hint} | url hint: {url_hint})")
     logger.info(f"Exact Match (EM): {em:.2f}")

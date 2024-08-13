@@ -18,6 +18,7 @@ python main.py \
 --text_key ctx \
 --label_key activity_label \
 --n_eval_data_points 100 \
+--num_proc 16 \
 --method ts-guessing-question-based \
 --local_port $port \
 --model_name $model_name \

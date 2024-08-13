@@ -136,10 +136,7 @@ def main_cdd(
         xi=xi
     )
 
-    cdd_results = eval_data.map(
-        process_fn,
-        num_proc=num_proc,
-    )
+    cdd_results = eval_data.map(process_fn, num_proc=num_proc)
     cdd_results = [x["leaked"] for x in cdd_results]
     cdd_results = np.array(cdd_results)
 

@@ -8,7 +8,9 @@ import numpy as np
 from tqdm import tqdm
 from rouge_score import rouge_scorer
 from nltk.tokenize import word_tokenize, sent_tokenize
-from llmsanitize.utils.logger import get_child_logger
+from functools import partial
+
+from llmsanitize.utils.logger import get_child_logger, suspend_logging
 from llmsanitize.utils.dataset_utils import get_answers_list, get_answer_index
 from llmsanitize.closed_data_methods.llm import LLM
 from llmsanitize.closed_data_methods.ts_guessing_question_based import filter_data
@@ -56,25 +58,23 @@ def process_response(response, wrong_letter):
     return response
 
 
-def inference(data_points, eval_data_name, llm):
-    responses, answers = [], []
-    for example in tqdm(data_points):
-        prompt, answer, wrong_letter = build_prompt(
-            example,
-            eval_data_name
-        )
-        response, cost = llm.query(prompt)
-        response = process_response(response, wrong_letter)
-        responses.append(response)
-        answers.append(answer)
-
-    return responses, answers
+@suspend_logging
+def inference(data_point, eval_data_name, llm):
+    prompt, answer, wrong_letter = build_prompt(
+        example,
+        eval_data_name
+    )
+    response, cost = llm.query(prompt)
+    response = process_response(response, wrong_letter)
+    data_point["answer"] = answer
+    data_point["response"] = response
 
 
 def main_ts_guessing_question_multichoice(
     eval_data: list = [],
     eval_data_name: str = None,
     n_eval_data_points: int = 100,
+    num_proc: int = 16,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,
@@ -121,17 +121,15 @@ def main_ts_guessing_question_multichoice(
         echo=echo,
     )
 
-    responses, answers = inference(
-        data_points,
-        eval_data_name,
-        llm
+    process_fn = partial(
+        inference,
+        eval_data_name=eval_data_name,
+        llm=llm,
     )
 
-    responses = [x.lower() for x in responses]
-    answers = [x.lower() for x in answers]
-    print("HERE")
-    print(responses[0])
-    print(answers[0])
+    ts_guessing_results = eval_data.map(process_fn, num_proc=num_proc)
+    answers = [x["answer"].lower() for x in ts_guessing_results]
+    responses = [x["response"].lower() for x in ts_guessing_results]
     em = len([i for i in range(len(responses)) if responses[i] == answers[i]]) / len(responses)
     scorer = rouge_scorer.RougeScorer(['rougeLsum'], use_stemmer=True)
     rl = np.mean(np.array([scorer.score(responses[i], answers[i])["rougeLsum"].fmeasure for i in range(len(responses))]))
