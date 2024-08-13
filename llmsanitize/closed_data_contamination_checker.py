@@ -111,6 +111,7 @@ class ClosedDataContaminationChecker(BaseContaminationChecker):
     def contamination_cdd(self):
         main_cdd(
             eval_data=self.eval_data,
+            num_proc=self.num_proc,
             # closed_data parameters
             local_model_path=self.local_model_path,
             local_tokenizer_path=self.local_tokenizer_path,

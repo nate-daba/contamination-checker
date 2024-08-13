@@ -5,6 +5,7 @@ https://arxiv.org/pdf/2402.15938.pdf
 
 import numpy as np
 from tqdm import tqdm
+from functools import partial
 
 from llmsanitize.closed_data_methods.llm import LLM
 from llmsanitize.utils.logger import get_child_logger
@@ -41,34 +42,32 @@ def get_peak(samples, s_0, alpha):
     return peak
 
 
+@suspend_logging
 def inference(
-    eval_data,
+    data_point,
     llm0,
     llm,
     num_samples,
     alpha,
     xi
 ):
-    cdd_results = []
-    for data_point in tqdm(eval_data):
-        prompt = data_point["text"]
+    prompt = data_point["text"]
 
-        _, response_0, _ = llm0.query(prompt, return_full_response=True)
-        s_0 = response_0["choices"][0]["text"]
+    _, response_0, _ = llm0.query(prompt, return_full_response=True)
+    s_0 = response_0["choices"][0]["text"]
 
-        _, responses, _ = llm.query(prompt, return_full_response=True)
-        samples = [responses["choices"][j]["text"] for j in range(num_samples)]
+    _, responses, _ = llm.query(prompt, return_full_response=True)
+    samples = [responses["choices"][j]["text"] for j in range(num_samples)]
 
-        peak = get_peak(samples, s_0, alpha)
-        leaked = int(peak > xi)
-        cdd_results.append(leaked)
-    cdd_results = np.array(cdd_results)
+    peak = get_peak(samples, s_0, alpha)
+    leaked = int(peak > xi)
 
-    return cdd_results
+    return leaked
 
 
 def main_cdd(
     eval_data: list = [],
+    num_proc: int = 16,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,
@@ -127,7 +126,23 @@ def main_cdd(
 
     logger.info(f"all data size: {len(eval_data)}")
 
-    cdd_results = inference(eval_data, llm0, llm, num_samples, alpha, xi)
+    process_fn = partial(
+        inference,
+        llm0=llm0,
+        llm=llm,
+        num_samples=num_samples,
+        alpha=alpha,
+        xi=xi
+    )
+
+    cdd_results = eval_data.map(
+        process_fn,
+        with_indices=True,
+        num_proc=num_proc,
+        features=features,
+        load_from_cache_file=False
+    )
+    cdd_results = np.array(cdd_results)
 
     contaminated_frac = 100 * np.mean(cdd_results)
     logger.info(f"Checking contamination level of model {local_model_path} with CDD")
