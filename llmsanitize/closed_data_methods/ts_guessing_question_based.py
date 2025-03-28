@@ -4,8 +4,9 @@ https://arxiv.org/pdf/2311.09783
 """
 
 import os
-os.environ['CLASSPATH']="/data/mathieu/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
-os.environ["STANFORD_MODELS"]="/data/mathieu/stanford-postagger-full-2020-11-17/models"
+import sys
+os.environ['CLASSPATH']="/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
+os.environ["STANFORD_MODELS"]="/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/models"
 import numpy as np
 from tqdm import tqdm
 from rouge_score import rouge_scorer
@@ -22,6 +23,7 @@ logger = get_child_logger("ts_guessing_question_based")
 
 
 def get_stanford_tagger():
+    os.environ["_JAVA_OPTIONS"] = "-Xmx16g"
     if not("CLASSPATH" in os.environ and "STANFORD_MODELS" in os.environ):
         logger.info("You are using a closed_data contamination detection method which requires Stanford's Part-of-Speech tagger.")
         logger.info("You need to setup global variables CLASSPATH and STANFORD_MODELS specifying the path to the tagger.")
@@ -79,7 +81,10 @@ def process_response(response):
 
     return processed_response
 
-
+def setup_stanford_env():
+    os.environ['CLASSPATH'] = "/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
+    os.environ["STANFORD_MODELS"] = "/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/models"
+    
 def inference(
     data_point,
     eval_data_name,
@@ -88,8 +93,10 @@ def inference(
     category_hint=False,
     url_hint=False
 ):
+    setup_stanford_env()
+    
     tagger = get_stanford_tagger()
-
+    
     prompt, masked_word = build_prompt(
         data_point,
         tagger,

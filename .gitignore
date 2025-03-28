@@ -8,3 +8,7 @@ openai_creds/*
 output/*
 build/*
 dist/*
+models/
+pip_cache/
+postagger/
+
