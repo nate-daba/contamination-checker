@@ -10,15 +10,20 @@ DEFAULT_MODEL="meta-llama/Llama-2-7b-chat-hf"
 MODEL_NAME=$DEFAULT_MODEL
 
 # Parse command line arguments
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --model=*)
       MODEL_NAME="${1#*=}"
       shift
       ;;
     --model)
-      MODEL_NAME="$2"
-      shift 2
+      if [ $# -gt 1 ]; then
+        MODEL_NAME="$2"
+        shift 2
+      else
+        echo "Error: Missing argument for --model"
+        exit 1
+      fi
       ;;
     *)
       echo "Unknown option: $1"
@@ -49,8 +54,8 @@ server_type=vllm.entrypoints.openai.api_server
 echo "Starting server with model: $MODEL_NAME"
 
 python3 -m $server_type \
-    --model $MODEL_NAME \
-    --tokenizer $MODEL_NAME \
+    --model "$MODEL_NAME" \
+    --tokenizer "$MODEL_NAME" \
     --gpu-memory-utilization=0.9 \
     --max-num-seqs=200 \
     --disable-log-requests \

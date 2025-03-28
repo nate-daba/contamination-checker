@@ -41,7 +41,8 @@ def build_prompt(
     eval_data_name,
     type_hint=False,
     category_hint=False,
-    url_hint=False
+    url_hint=False,
+    prompt_style="new"  # Add this parameter, default to new style
 ):
     text = example["text"]
     tags = tagger.tag(text.split())
@@ -55,29 +56,60 @@ def build_prompt(
             text = text[:i] + "[MASK]" + text[(i+len(word)):]
             break
 
-    prompt = "[SYSTEM: You are a word prediction AI. You MUST respond with EXACTLY ONE WORD and NOTHING ELSE. No explanations, no prefixes like 'Sure' or 'The word is'. Just output the single word that belongs in place of [MASK].]\n\n"
-    prompt += f"Text with missing word: {text}\n\n"
-    if type_hint:
-        if eval_data_name == "truthful_qa":
-            example_type = example["type"]
-            prompt += f"\nHint: {example_type}"
-    if category_hint:
-        if eval_data_name == "truthful_qa":
-            example_category = example["category"]
-            prompt += f"\nHint: {example_category}"
-    if url_hint:
-        if eval_data_name == "truthful_qa":
-            example_url = example["source"]
-            prompt += f"\nHint: {example_url}"
-    prompt += "Reply with only the missing word that replaces [MASK]:"
+    if prompt_style == "old":
+        # Old prompting style
+        prompt = "Complete the sentence in one word:"
+        prompt += f"\n\n{text}"
+        if type_hint:
+            if eval_data_name == "truthful_qa":
+                example_type = example["type"]
+                prompt += f"\nHint: {example_type}"
+        if category_hint:
+            if eval_data_name == "truthful_qa":
+                example_category = example["category"]
+                prompt += f"\nHint: {example_category}"
+        if url_hint:
+            if eval_data_name == "truthful_qa":
+                example_url = example["source"]
+                prompt += f"\nHint: {example_url}"
+        prompt += "\nReply the answer only."
+    else:
+        # Enhanced restrictive prompt style
+        prompt = "[INSTRUCTION: This is a strict one-word prediction task. You are required to respond with EXACTLY ONE WORD - the word that belongs in place of [MASK]. No explanations, no punctuation, no articles, no pleasantries, no sentences. JUST ONE SINGLE WORD. Violation of this format will result in task failure.]\n\n"
+        prompt += f"Text with masked word: {text}\n\n"
+        if type_hint:
+            if eval_data_name == "truthful_qa":
+                example_type = example["type"]
+                prompt += f"Context hint: {example_type}\n"
+        if category_hint:
+            if eval_data_name == "truthful_qa":
+                example_category = example["category"]
+                prompt += f"Category hint: {example_category}\n"
+        if url_hint:
+            if eval_data_name == "truthful_qa":
+                example_url = example["source"]
+                prompt += f"Source hint: {example_url}\n"
+        prompt += "YOUR ANSWER (one word only): "
 
     return prompt, word
 
 
 def process_response(response):
-    processed_response = word_tokenize(response)[0]
-
-    return processed_response
+    """Extract only the first word from the response, no matter what."""
+    # Strip any whitespace and punctuation from the beginning
+    response = response.strip().lstrip('.,;:!?"\' ')
+    
+    # If there's nothing left, return empty string
+    if not response:
+        return ""
+    
+    # Split by whitespace and take the first chunk
+    first_chunk = response.split()[0] if response.split() else ""
+    
+    # Remove any trailing punctuation
+    first_word = first_chunk.rstrip('.,;:!?"\' ')
+    
+    return first_word
 
 def setup_stanford_env():
     os.environ['CLASSPATH'] = "/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
@@ -89,7 +121,8 @@ def inference(
     llm, 
     type_hint=False,
     category_hint=False,
-    url_hint=False
+    url_hint=False,
+    prompt_style="new"  # Add this parameter
 ):
     setup_stanford_env()
     
@@ -101,17 +134,18 @@ def inference(
         eval_data_name,
         type_hint,
         category_hint,
-        url_hint
+        url_hint,
+        prompt_style  # Pass it to build_prompt
     )
     data_point["masked_word"] = masked_word
     data_point["full_prompt"] = prompt  # Store the full prompt with [MASK]
     
     if prompt == "failed":
         data_point["response"] = "failed"
-        data_point["raw_response"] = "failed"  # Store the raw response
+        data_point["raw_response"] = "failed"
     else:
         raw_response, cost = llm.query(prompt)
-        data_point["raw_response"] = raw_response  # Store the raw response
+        data_point["raw_response"] = raw_response
         response = process_response(raw_response)
         data_point["response"] = response
 
@@ -190,6 +224,7 @@ def main_ts_guessing_question_based(
     type_hint: bool = False,
     category_hint: bool = False,
     url_hint: bool = False,
+    prompt_style: str = "new"
 ):
     # filter out some open_data points
     data_points = filter_data(eval_data, eval_data_name)
@@ -223,9 +258,10 @@ def main_ts_guessing_question_based(
         inference,
         eval_data_name=eval_data_name,
         llm=llm,
-        type_hint=False,
-        category_hint=False,
-        url_hint=False
+        type_hint=type_hint,
+        category_hint=category_hint,
+        url_hint=url_hint,
+        prompt_style=prompt_style  # Pass the prompt style
     )
 
     ts_guessing_results = data_points.map(process_fn, num_proc=num_proc)
