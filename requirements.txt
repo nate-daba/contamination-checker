@@ -15,3 +15,6 @@ transformers==4.48.2
 triton==3.2.0
 vllm==0.8.2
 outlines==0.1.11
+flash-attn==2.7.4.post1
+# Install flashinfer-python with: pip install flashinfer-python -i https://flashinfer.ai/whl/cu124/torch2.6/
+flashinfer-python==0.2.3+cu124torch2.6

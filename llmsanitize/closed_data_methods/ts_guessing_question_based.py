@@ -55,8 +55,8 @@ def build_prompt(
             text = text[:i] + "[MASK]" + text[(i+len(word)):]
             break
 
-    prompt = "Complete the sentence in one word:"
-    prompt += f"\n\n{text}"
+    prompt = "[SYSTEM: You are a word prediction AI. You MUST respond with EXACTLY ONE WORD and NOTHING ELSE. No explanations, no prefixes like 'Sure' or 'The word is'. Just output the single word that belongs in place of [MASK].]\n\n"
+    prompt += f"Text with missing word: {text}\n\n"
     if type_hint:
         if eval_data_name == "truthful_qa":
             example_type = example["type"]
@@ -69,7 +69,7 @@ def build_prompt(
         if eval_data_name == "truthful_qa":
             example_url = example["source"]
             prompt += f"\nHint: {example_url}"
-    prompt += "\nReply the answer only."
+    prompt += "Reply with only the missing word that replaces [MASK]:"
 
     return prompt, word
 
@@ -104,15 +104,18 @@ def inference(
         url_hint
     )
     data_point["masked_word"] = masked_word
+    data_point["full_prompt"] = prompt  # Store the full prompt with [MASK]
+    
     if prompt == "failed":
         data_point["response"] = "failed"
+        data_point["raw_response"] = "failed"  # Store the raw response
     else:
-        response, cost = llm.query(prompt)
-        response = process_response(response)
+        raw_response, cost = llm.query(prompt)
+        data_point["raw_response"] = raw_response  # Store the raw response
+        response = process_response(raw_response)
         data_point["response"] = response
 
     return data_point
-
 
 @suspend_logging
 def filter_data(eval_data, eval_data_name):
@@ -229,12 +232,25 @@ def main_ts_guessing_question_based(
     ts_guessing_results = [x for x in ts_guessing_results if x["response"] != "failed"]
     ts_guessing_results = ts_guessing_results[:n_eval_data_points]
 
+    # Log some sample prompts and responses
+    num_samples_to_log = min(5, len(ts_guessing_results))
+    logger.info(f"Sample prompts and responses:")
+    for i in range(num_samples_to_log):
+        logger.info(f"Sample {i+1}:")
+        logger.info(f"Full prompt: {ts_guessing_results[i]['full_prompt']}")
+        logger.info(f"Masked word: {ts_guessing_results[i]['masked_word']}")
+        logger.info(f"Raw response: {ts_guessing_results[i]['raw_response']}")
+        logger.info(f"Processed response: {ts_guessing_results[i]['response']}")
+        logger.info("---")
+
+    # Continue with existing code...
     masked_words = [x["masked_word"].lower() for x in ts_guessing_results]
     responses = [x["response"].lower() for x in ts_guessing_results]
     em = len([i for i in range(len(responses)) if responses[i] == masked_words[i]]) / len(responses)
     logger.info(f"Question-based completion (type hint: {type_hint} | category hint: {category_hint} | url hint: {url_hint})")
     logger.info(f"Exact Match (EM): {em:.2f}")
 
+    # Save the full DataFrame with prompts and raw responses
     df = pd.DataFrame(ts_guessing_results)
     datentime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     folder_name = f'{model_name}-{eval_data_name}-{datentime}'
