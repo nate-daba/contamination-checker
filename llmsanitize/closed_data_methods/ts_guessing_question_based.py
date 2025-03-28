@@ -4,9 +4,7 @@ https://arxiv.org/pdf/2311.09783
 """
 
 import os
-import sys
-os.environ['CLASSPATH']="/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/stanford-postagger.jar"
-os.environ["STANFORD_MODELS"]="/workspace/ndaba/research/code/LLMSanitize/postagger/stanford-postagger-full-2020-11-17/models"
+import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from rouge_score import rouge_scorer
@@ -14,6 +12,7 @@ from nltk.tokenize import word_tokenize
 from nltk.tag import StanfordPOSTagger
 from functools import partial
 from datasets import Dataset 
+from datetime import datetime
 
 from llmsanitize.utils.logger import get_child_logger, suspend_logging
 from llmsanitize.utils.dataset_utils import get_answers_list
@@ -35,7 +34,6 @@ def get_stanford_tagger():
     st = StanfordPOSTagger('english-bidirectional-distsim.tagger')
 
     return st
-
 
 def build_prompt(
     example, 
@@ -236,3 +234,10 @@ def main_ts_guessing_question_based(
     em = len([i for i in range(len(responses)) if responses[i] == masked_words[i]]) / len(responses)
     logger.info(f"Question-based completion (type hint: {type_hint} | category hint: {category_hint} | url hint: {url_hint})")
     logger.info(f"Exact Match (EM): {em:.2f}")
+
+    df = pd.DataFrame(ts_guessing_results)
+    datentime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    folder_name = f'{model_name}-{eval_data_name}-{datentime}'
+    output_dir = f'output/{folder_name}'
+    os.makedirs(output_dir, exist_ok=True)
+    df.to_csv(f"{output_dir}/ts_guessing_question_based_results.csv", index=False)

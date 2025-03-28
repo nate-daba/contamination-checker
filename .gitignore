@@ -11,4 +11,4 @@ dist/*
 models/
 pip_cache/
 postagger/
-
+._.DS_Store
