@@ -75,7 +75,8 @@ def build_prompt(
         prompt += "\nReply the answer only."
     else:
         # Enhanced restrictive prompt style
-        prompt = "[INSTRUCTION: This is a strict one-word prediction task. You are required to respond with EXACTLY ONE WORD - the word that belongs in place of [MASK]. No explanations, no punctuation, no articles, no pleasantries, no sentences. JUST ONE SINGLE WORD. Violation of this format will result in task failure.]\n\n"
+        # prompt = "[INSTRUCTION: This is a strict one-word prediction task. You are required to respond with EXACTLY ONE WORD - the word that belongs in place of [MASK]. No explanations, no punctuation, no articles, no pleasantries, no sentences. JUST ONE SINGLE WORD. Violation of this format will result in task failure.]\n\n"
+        prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output EXACTLY ONE WORD as your entire response - the word that belongs in place of [MASK]. The word should be a noun, verb, or adjective that fits naturally in the sentence. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word.]\n\n"
         prompt += f"Text with masked word: {text}\n\n"
         if type_hint:
             if eval_data_name == "truthful_qa":
@@ -89,7 +90,8 @@ def build_prompt(
             if eval_data_name == "truthful_qa":
                 example_url = example["source"]
                 prompt += f"Source hint: {example_url}\n"
-        prompt += "YOUR ANSWER (one word only): "
+        # prompt += "YOUR ANSWER (one word only): "
+        prompt += "YOUR RESPONSE (must be exactly one word): "
 
     return prompt, word
 
@@ -214,7 +216,7 @@ def main_ts_guessing_question_based(
     no_chat_template: bool = False,
     num_samples: int = 1,
     max_input_tokens: int = 512,
-    max_output_tokens: int = 128,
+    max_output_tokens: int = 512,
     temperature: float = 0.0,
     top_logprobs: int = 0,
     max_request_time: int = 600,
@@ -234,6 +236,8 @@ def main_ts_guessing_question_based(
     if n_eval_data_points > 0:
         p = np.random.permutation(len(data_points))
         data_points = [data_points[x] for x in p]
+        data_points = data_points[:n_eval_data_points]
+        logger.info(f"We are left with {len(data_points)} data points after subsampling")
     data_points = Dataset.from_list(data_points)
 
     llm = LLM(
