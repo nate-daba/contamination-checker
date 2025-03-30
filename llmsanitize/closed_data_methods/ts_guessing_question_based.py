@@ -4,6 +4,7 @@ https://arxiv.org/pdf/2311.09783
 """
 
 import os
+import re
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -76,7 +77,8 @@ def build_prompt(
     else:
         # Enhanced restrictive prompt style
         # prompt = "[INSTRUCTION: This is a strict one-word prediction task. You are required to respond with EXACTLY ONE WORD - the word that belongs in place of [MASK]. No explanations, no punctuation, no articles, no pleasantries, no sentences. JUST ONE SINGLE WORD. Violation of this format will result in task failure.]\n\n"
-        prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output EXACTLY ONE WORD as your entire response - the word that belongs in place of [MASK]. The word should be a noun, verb, or adjective that fits naturally in the sentence. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word.]\n\n"
+        # prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output EXACTLY ONE WORD as your entire response - the word that belongs in place of [MASK]. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word.]\n\n"
+        prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output your answer as EXACTLY ONE WORD inside \\boxed{} notation. Your entire response should look like this: \\boxed{word}. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word and put it in \\boxed{}.]\n\n"
         prompt += f"Text with masked word: {text}\n\n"
         if type_hint:
             if eval_data_name == "truthful_qa":
@@ -91,17 +93,22 @@ def build_prompt(
                 example_url = example["source"]
                 prompt += f"Source hint: {example_url}\n"
         # prompt += "YOUR ANSWER (one word only): "
-        prompt += "YOUR RESPONSE (must be exactly one word): "
+        # prompt += "YOUR RESPONSE (must be exactly one word): "
+        prompt += "YOUR RESPONSE (must be exactly one word in \\boxed{}): "
 
     return prompt, word
 
 
 def process_response(response):
-    """Extract only the first word from the response, no matter what."""
-    # Strip any whitespace and punctuation from the beginning
-    response = response.strip().lstrip('.,;:!?"\' ')
+    """Extract just the word from boxed notation or first word if that fails."""
+    # Try to extract content from \boxed{}
+    boxed_match = re.search(r'\\boxed\{([^{}]+)\}', response)
+    if boxed_match:
+        # Return the content inside \boxed{}, stripped of whitespace
+        return boxed_match.group(1).strip()
     
-    # If there's nothing left, return empty string
+    # Fallback to the previous method if no boxed content found
+    response = response.strip().lstrip('.,;:!?"\' ')
     if not response:
         return ""
     

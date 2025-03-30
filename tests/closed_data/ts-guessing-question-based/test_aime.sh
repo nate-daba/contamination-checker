@@ -67,4 +67,5 @@ python main.py \
 --num_proc 8 \
 --method ts-guessing-question-based \
 --local_port "$port" \
---model_name "$model_name"
+--model_name "$model_name" \
+--max_output_tokens 512 
