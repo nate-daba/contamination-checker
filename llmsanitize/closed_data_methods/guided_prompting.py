@@ -153,6 +153,11 @@ def main_guided_prompting(
     # method-specific parameters
     guided_prompting_task_type: str = None,
 ):
+    # Import required modules for saving CSV
+    import os
+    import pandas as pd
+    from datetime import datetime
+    
     # based on task type, choose prompt template
     type_str = guided_prompting_task_type
     guided_template = getattr(gui_prompts, f"GUI_{type_str}")
@@ -162,12 +167,15 @@ def main_guided_prompting(
     num_examples_to_test = 100
     split_fn = partial(guided_prompt_split_fn, dataset_name=eval_data_name, text_key=text_key)
     label_fn = partial(guided_prompt_process_label, dataset_name=eval_data_name)
-    print(eval_data)
+    
+    logger.info(f"Starting guided prompting evaluation on {eval_data_name}")
     eval_data = eval_data.map(split_fn, num_proc=num_proc, load_from_cache_file=False, with_indices=True)\
         .filter(lambda example: len(example['guided_prompt_part_1']) > 0 and len(example['guided_prompt_part_2']) > 0)\
         .map(label_fn, num_proc=num_proc)
+    
+    logger.info(f"After filtering, {len(eval_data)} examples remaining")
     random_examples = eval_data.shuffle(seed=42).filter(lambda _, idx: idx < num_examples_to_test, with_indices=True)
-    print(f"random samples: {random_examples}")
+    logger.info(f"Selected {len(random_examples)} examples for testing")
     
     llm = LLM(
         local_model_path=local_model_path,
@@ -206,19 +214,73 @@ def main_guided_prompting(
     features["guided_response"] = Value(dtype='string', id=None)
     features["first_part"] = Value(dtype='string', id=None)
     features["second_part"] = Value(dtype='string', id=None)
+    features["general_prompt"] = Value(dtype='string', id=None)
+    features["guided_prompt"] = Value(dtype='string', id=None)
+
+    # Add the prompts to the process_fn to save them
+    def process_fn_with_prompts(example, idx):
+        vars_map = {"split_name": eval_set_key, "dataset_name": eval_data_name, 
+                   "first_piece": example['guided_prompt_part_1'], "label": str(example[label_key])}
+        example["general_prompt"] = fill_template(general_template, vars_map)
+        example["guided_prompt"] = fill_template(guided_template, vars_map)
+        
+        return process_fn(example, idx)
 
     processed_examples = random_examples.map(
-        process_fn,
+        process_fn_with_prompts,
         with_indices=True,
         num_proc=num_proc,
         features=features,
         load_from_cache_file=False
     )
-    processed_examples = [example for example in processed_examples if (len(example['general_response']) > 0) and (len(example['guided_response']) > 0)]
+    
+    # Convert to list for easier processing
+    processed_examples_list = [example for example in processed_examples if (len(example['general_response']) > 0) and (len(example['guided_response']) > 0)]
+    logger.info(f"Successfully processed {len(processed_examples_list)} examples")
 
-    scores_diff = [example['guided_score'] - example['general_score'] for example in processed_examples]
-    logger.info(f"Tested {len(processed_examples)} examples with guided-prompting for closed_data {model_name}")
-    # TODO: add significance measure and bootstrap resampling
+    # Log sample prompts and responses
+    num_samples_to_log = min(10, len(processed_examples_list))
+    logger.info(f"Sample prompts and responses:")
+    for i in range(num_samples_to_log):
+        logger.info(f"Sample {i+1}:")
+        logger.info(f"First part: {processed_examples_list[i]['first_part']}")
+        logger.info(f"Second part (ground truth): {processed_examples_list[i]['second_part']}")
+        logger.info(f"General prompt: {processed_examples_list[i]['general_prompt']}")
+        logger.info(f"General response: {processed_examples_list[i]['general_response']}")
+        logger.info(f"General score: {processed_examples_list[i]['general_score']:.4f}")
+        logger.info(f"Guided prompt: {processed_examples_list[i]['guided_prompt']}")
+        logger.info(f"Guided response: {processed_examples_list[i]['guided_response']}")
+        logger.info(f"Guided score: {processed_examples_list[i]['guided_score']:.4f}")
+        logger.info(f"Score difference (guided - general): {processed_examples_list[i]['guided_score'] - processed_examples_list[i]['general_score']:.4f}")
+        logger.info("---")
+
+    # Calculate and log overall metrics
+    scores_diff = [example['guided_score'] - example['general_score'] for example in processed_examples_list]
+    logger.info(f"Tested {len(processed_examples_list)} examples with guided-prompting for closed_data {model_name}")
+    
+    # Conduct bootstrap test for significance
     p_value = bootstrap_test(scores_diff)
     logger.info(f"dataset: {eval_data_name}, guided_score - general_score (RougeL)")
     logger.info(f"mean: {np.mean(scores_diff):.3f}, std: {np.std(scores_diff):.3f}, p-value of diff <= 0: {p_value:.3f}")
+    
+    # Save results to CSV
+    df = pd.DataFrame(processed_examples_list)
+    datentime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    folder_name = f'{model_name}-{eval_data_name}-{datentime}'
+    output_dir = f'output/{folder_name}'
+    os.makedirs(output_dir, exist_ok=True)
+    df.to_csv(f"{output_dir}/guided_prompting_results.csv", index=False)
+    
+    # Also save a summary file with the overall metrics
+    summary_df = pd.DataFrame({
+        'model_name': [model_name],
+        'dataset_name': [eval_data_name],
+        'num_examples': [len(processed_examples_list)],
+        'mean_score_diff': [np.mean(scores_diff)],
+        'std_score_diff': [np.std(scores_diff)],
+        'p_value': [p_value],
+        'timestamp': [datentime]
+    })
+    summary_df.to_csv(f"{output_dir}/guided_prompting_summary.csv", index=False)
+    
+    return scores_diff, p_value
