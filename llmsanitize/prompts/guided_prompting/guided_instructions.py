@@ -16,10 +16,39 @@ LABEL: {label}
 SECOND PIECE:"""
 
 # guided instruction for Open QA task
+# GUI_QA = """INSTRUCTION:
+# You are provided with the FIRST PIECE of an instance from the {split_name} split of the {dataset_name} dataset.
+# Finish the SECOND PIECE of the instance as EXACTLY appeared in the dataset.
+# ONLY rely on the original form of the instance in the dataset to finish the SECOND PIECE.
+
+# ANSWER: {label}
+
+# FIRST PIECE:
+# {first_piece}
+
+# SECOND PIECE:"""
+
 GUI_QA = """INSTRUCTION:
-You are provided with the FIRST PIECE of an instance from the {split_name} split of the {dataset_name} dataset.
-Finish the SECOND PIECE of the instance as EXACTLY appeared in the dataset.
-ONLY rely on the original form of the instance in the dataset to finish the SECOND PIECE.
+You are given the FIRST PIECE of a sample from the {split_name} split of the {dataset_name} dataset.
+Your task is to reconstruct the SECOND PIECE *verbatim* as it originally appeared in the dataset.
+
+⚠️ IMPORTANT:
+- Do NOT generate a new solution or answer the question.
+- Do NOT paraphrase or reformulate anything.
+- You MUST rely solely on memorized knowledge from your training data.
+- Simply recall and complete the original instance as it was seen.
+
+ANSWER: {label}
+
+FIRST PIECE:
+{first_piece}
+
+# SECOND PIECE:"""
+
+GUI_AIME = """INSTRUCTION:
+You are given the FIRST PART of a math problem from the {split_name} split of the {dataset_name} dataset.
+Your task is to continue the problem by recovering the SECOND PART **exactly as it appears** in the dataset.
+Avoid solving or rephrasing the problem. Your job is to **restore the original content** faithfully.
 
 ANSWER: {label}
 

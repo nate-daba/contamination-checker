@@ -43,6 +43,7 @@ class ClosedDataContaminationChecker(BaseContaminationChecker):
             text_key=self.text_key,
             label_key=self.label_key,
             num_proc=self.num_proc,
+            n_eval_data_points=self.n_eval_data_points,
             # closed_data parameters
             local_model_path=self.local_model_path,
             local_tokenizer_path=self.local_tokenizer_path,

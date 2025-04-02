@@ -24,6 +24,14 @@ FIRST PIECE:
 
 SECOND PIECE:"""
 
+GI_AIME = """INSTRUCTION:
+You are given the FIRST PART of a math problem. Continue with the SECOND PART using natural reasoning or math-related context. You may complete the problem however makes sense, but do not solve or answer it.
+
+FIRST PART:
+{first_piece}
+
+SECOND PART:"""
+
 # general instruction for classification task
 GI_CLS = """INSTRUCTION:
 Finish the SECOND PIECE based on the FIRST PIECE, such that these two pieces become a single instance with the following LABEL.

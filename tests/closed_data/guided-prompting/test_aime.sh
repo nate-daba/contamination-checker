@@ -54,16 +54,16 @@ done
 echo "vLLM server is ready!"
 # test guided prompting closed_data contamination method
 python main.py \
---eval_data_name cais/mmlu \
---eval_data_config_name high_school_mathematics \
---eval_set_key test \
---text_key question \
---label_key answer_text \
---n_eval_data_points 270 \
---num_proc 16 \
+--eval_data_name HuggingFaceH4/aime_2024 \
+--eval_data_config_name default \
+--eval_set_key train \
+--text_key problem \
+--label_key answer \
+--n_eval_data_points 30 \
+--num_proc 8 \
 --method guided-prompting \
 --local_port "$port" \
 --model_name "$model_name" \
---guided_prompting_task_type QA \
+--guided_prompting_task_type AIME \
 --use_local_model \
 --max_output_tokens 2048

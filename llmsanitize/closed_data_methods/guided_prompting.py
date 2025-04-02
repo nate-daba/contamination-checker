@@ -59,20 +59,34 @@ def guided_prompt_split_fn(
         sents = example[text_key].split('_')
         splits['guided_prompt_part_1'] = sents[0]
         splits['guided_prompt_part_2'] = sents[1]
+    
+    # Math reasoning tasks        
+    elif dataset_name == 'HuggingFaceH4/aime_2024':
+        # Split solution into sentences
+        solution = example['solution']
+        sentences = nltk.sent_tokenize(solution)
+        
+        if len(sentences) < 2:
+            return splits  # Not enough to split
+
+        # Choose a random split point (or fixed N if preferred)
+        first_part_length = random.randint(1, len(sentences) - 1)
+
+        splits['guided_prompt_part_1'] = 'Problem:\n' + example['problem'] + '\n\n' + 'Solution (beginning):\n' + ' '.join(sentences[:first_part_length])
+        splits['guided_prompt_part_2'] = ' '.join(sentences[first_part_length:])
     else:
         raise(f"Error! guided_prompt_split_fn not found processing for dataset_name: {dataset_name}")
 
     return splits
-
 
 def guided_prompt_process_label(example, dataset_name):
     if dataset_name == 'cais/mmlu':
         example['answer_text'] = example['choices'][int(example['answer'])]
     elif dataset_name == 'winogrande':
         example['answer_token'] = example['option1'] + '/' + example['option2']
-    
+    elif dataset_name == 'HuggingFaceH4/aime_2024':
+        example['answer_text'] = str(example['answer'])  
     return example
-
 
 def bootstrap_test(data):
     ''' bootstrap test (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html)
@@ -134,6 +148,7 @@ def main_guided_prompting(
     text_key: str = "text",
     label_key: str = "label",
     num_proc: int = 16,
+    n_eval_data_points: int = 100,
     # closed_data parameters
     local_model_path: str = None,
     local_tokenizer_path: str = None,
@@ -164,7 +179,7 @@ def main_guided_prompting(
     general_template = getattr(gi_prompts, f"GI_{type_str}")
 
     # process selected examples parallely
-    num_examples_to_test = 100
+    num_examples_to_test = n_eval_data_points
     split_fn = partial(guided_prompt_split_fn, dataset_name=eval_data_name, text_key=text_key)
     label_fn = partial(guided_prompt_process_label, dataset_name=eval_data_name)
     
@@ -243,11 +258,11 @@ def main_guided_prompting(
     logger.info(f"Sample prompts and responses:")
     for i in range(num_samples_to_log):
         logger.info(f"Sample {i+1}:")
-        logger.info(f"First part: {processed_examples_list[i]['first_part']}")
+        # logger.info(f"First part: {processed_examples_list[i]['first_part']}")
         logger.info(f"Second part (ground truth): {processed_examples_list[i]['second_part']}")
-        logger.info(f"General prompt: {processed_examples_list[i]['general_prompt']}")
-        logger.info(f"General response: {processed_examples_list[i]['general_response']}")
-        logger.info(f"General score: {processed_examples_list[i]['general_score']:.4f}")
+        # logger.info(f"General prompt: {processed_examples_list[i]['general_prompt']}")
+        # logger.info(f"General response: {processed_examples_list[i]['general_response']}")
+        # logger.info(f"General score: {processed_examples_list[i]['general_score']:.4f}")
         logger.info(f"Guided prompt: {processed_examples_list[i]['guided_prompt']}")
         logger.info(f"Guided response: {processed_examples_list[i]['guided_response']}")
         logger.info(f"Guided score: {processed_examples_list[i]['guided_score']:.4f}")
