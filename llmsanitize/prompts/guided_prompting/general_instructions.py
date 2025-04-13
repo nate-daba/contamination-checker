@@ -24,13 +24,16 @@ FIRST PIECE:
 
 SECOND PIECE:"""
 
+# general instruction for Open QA task
 GI_AIME = """INSTRUCTION:
-You are given the FIRST PART of a math problem. Continue with the SECOND PART using natural reasoning or math-related context. You may complete the problem however makes sense, but do not solve or answer it.
+Finish the SECOND PIECE based on the FIRST PIECE, such that these two pieces become a single question with the following ANSWER.
 
-FIRST PART:
+ANSWER: {label}
+
+FIRST PIECE:
 {first_piece}
 
-SECOND PART:"""
+SECOND PIECE:"""
 
 # general instruction for classification task
 GI_CLS = """INSTRUCTION:

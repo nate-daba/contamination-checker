@@ -57,51 +57,58 @@ def build_prompt(
                 prompt += f"\n{letter}: [{choice}]"
         prompt += "\n\nReply with answer only."
     else:
-        # New more restrictive prompting style with crucial rule included
-        # prompt = f"[INSTRUCTION: This is a multiple-choice question task. You are required to fill in ONLY the missing option {wrong_letter}. The CRUCIAL RULE is that your answer must be DIFFERENT from all other options shown. Respond with EXACTLY the content that should replace [MASK] in option {wrong_letter}. No explanations, no prefixes, no other text - JUST THE ANSWER CONTENT. Violation of this format will result in task failure.]\n\n"
-        prompt = f"[INSTRUCTION: This is a multiple-choice question task. You are required to fill in ONLY the missing option {wrong_letter}. Respond with EXACTLY the content that should replace [MASK] in option {wrong_letter}. No explanations, no prefixes, no other text - JUST THE ANSWER CONTENT. Violation of this format will result in task failure.]\n\n"
-        prompt += f"Question: {text}\n\n"
-        prompt += "Options:\n"
+        # New stricter instruction with \boxed{} output
+        prompt = (
+            f"[INSTRUCTION: This is a multiple-choice question task. "
+            f"You are required to fill in ONLY the missing option {wrong_letter}. "
+            f"Respond with EXACTLY the content that should replace [MASK] in option {wrong_letter}, "
+            f"and wrap your final answer inside \\boxed{{}} (e.g., \\boxed{{correct option text}}). "
+            f"No explanation, no prefixes, no extra text. Task failure will occur if the answer is not boxed.]\n\n"
+        )
+        prompt += f"Question: {text}\n\nOptions:\n"
         for i in range(len(choices)):
             letter = alphabet[i]
             if i == wrong_choice_index:
                 prompt += f"{letter}: [MASK]\n"
             else:
-                choice = choices[i]
-                prompt += f"{letter}: [{choice}]\n"
+                prompt += f"{letter}: [{choices[i]}]\n"
         prompt += f"\nYOUR ANSWER FOR OPTION {wrong_letter} (replace [MASK]): "
 
     return prompt, answer, wrong_letter, wrong_choice_content
 
 
 def process_response(response, wrong_letter):
-    """Extract the answer from the response more robustly."""
-    # First try the original method
+    """Extract the answer from the response, prioritizing boxed format."""
+    import re
+    response = response.strip()
+
+    # Try extracting from \boxed{...}
+    boxed_match = re.search(r'\\boxed\{(.+?)\}', response)
+    if boxed_match:
+        return boxed_match.group(1).strip()
+
+    # Fallback: original extraction using wrong_letter:
     symbol = wrong_letter + ":"
     if symbol in response:
         response = response.split(symbol)[1]
         sents = sent_tokenize(response)
         if len(sents) > 0:
             response = sents[0]
-    
-    # Clean up the response
-    response = response.strip()
-    
-    # Remove common prefixes models might add
+
+    # Clean up common prefixes
     prefixes_to_remove = [
         "The answer is ", "My answer is ", "Answer: ", 
-        "[MASK] = ", "[MASK] is ", "Option " + wrong_letter + ": ",
-        wrong_letter + ": ", "The missing text is ", "The content is "
+        "[MASK] = ", "[MASK] is ", f"Option {wrong_letter}: ",
+        f"{wrong_letter}: ", "The missing text is ", "The content is "
     ]
-    
     for prefix in prefixes_to_remove:
         if response.lower().startswith(prefix.lower()):
             response = response[len(prefix):]
-    
-    # Remove brackets if the model added them
+
+    # Remove brackets
     if response.startswith("[") and response.endswith("]"):
         response = response[1:-1]
-        
+
     return response.strip()
 
 
@@ -154,7 +161,7 @@ def main_ts_guessing_question_multichoice(
     sleep_time: int = 1,
     echo: bool = False,
     # Added parameter for prompt style
-    prompt_style: str = "old"
+    prompt_style: str = "new"
 ):
     # filter out some open_data points
     data_points = filter_data(eval_data, eval_data_name)

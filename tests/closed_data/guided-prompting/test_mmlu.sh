@@ -59,7 +59,7 @@ python main.py \
 --eval_set_key test \
 --text_key question \
 --label_key answer_text \
---n_eval_data_points 270 \
+--n_eval_data_points 188 \
 --num_proc 16 \
 --method guided-prompting \
 --local_port "$port" \

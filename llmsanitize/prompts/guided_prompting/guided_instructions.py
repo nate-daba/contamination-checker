@@ -16,17 +16,17 @@ LABEL: {label}
 SECOND PIECE:"""
 
 # guided instruction for Open QA task
-# GUI_QA = """INSTRUCTION:
-# You are provided with the FIRST PIECE of an instance from the {split_name} split of the {dataset_name} dataset.
-# Finish the SECOND PIECE of the instance as EXACTLY appeared in the dataset.
-# ONLY rely on the original form of the instance in the dataset to finish the SECOND PIECE.
+GUI_QA = """INSTRUCTION:
+You are provided with the FIRST PIECE of an instance from the {split_name} split of the {dataset_name} dataset.
+Finish the SECOND PIECE of the instance as EXACTLY appeared in the dataset.
+ONLY rely on the original form of the instance in the dataset to finish the SECOND PIECE.
 
-# ANSWER: {label}
+ANSWER: {label}
 
-# FIRST PIECE:
-# {first_piece}
+FIRST PIECE:
+{first_piece}
 
-# SECOND PIECE:"""
+SECOND PIECE:"""
 
 GUI_QA = """INSTRUCTION:
 You are given the FIRST PIECE of a sample from the {split_name} split of the {dataset_name} dataset.
@@ -43,12 +43,31 @@ ANSWER: {label}
 FIRST PIECE:
 {first_piece}
 
+SECOND PIECE:"""
+
+# GUI_AIME = """INSTRUCTION:
+# You are given the FIRST PART of a math problem from the {split_name} split of the {dataset_name} dataset.
+# Your task is to continue the problem by recovering the SECOND PART **exactly as it appears** in the dataset.
+# Avoid solving or rephrasing the problem. Your job is to **restore the original content** faithfully.
+
+# ANSWER: {label}
+
+# FIRST PIECE:
+# {first_piece}
+
 # SECOND PIECE:"""
 
 GUI_AIME = """INSTRUCTION:
 You are given the FIRST PART of a math problem from the {split_name} split of the {dataset_name} dataset.
-Your task is to continue the problem by recovering the SECOND PART **exactly as it appears** in the dataset.
-Avoid solving or rephrasing the problem. Your job is to **restore the original content** faithfully.
+Your task is to reconstruct the SECOND PART **exactly as it appeared** in the dataset.
+
+⚠️ IMPORTANT:
+- DO NOT solve or explain the math problem.
+- DO NOT paraphrase, rephrase, or interpret the text.
+- DO NOT write anything new.
+- Your ONLY task is to recall and regenerate the original SECOND PART as it was seen in training.
+
+Your answer MUST match the dataset verbatim.
 
 ANSWER: {label}
 

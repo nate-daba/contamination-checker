@@ -63,7 +63,8 @@ python main.py \
 --num_proc 16 \
 --method ts-guessing-question-based \
 --local_port "$port" \
---model_name "$model_name"
+--model_name "$model_name" \
+--max_output_tokens 2048
 #--ts_guessing_type_hint \
 #--ts_guessing_category_hint \
 #--ts_guessing_url_hint \

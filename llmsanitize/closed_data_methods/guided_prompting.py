@@ -2,7 +2,9 @@
 This file implements the closed_data contamination detection through guided prompting.
 https://arxiv.org/pdf/2308.08493.pdf
 """
-
+import os
+import pandas as pd
+from datetime import datetime
 import nltk
 import random
 import numpy as np
@@ -62,17 +64,15 @@ def guided_prompt_split_fn(
     
     # Math reasoning tasks        
     elif dataset_name == 'HuggingFaceH4/aime_2024':
-        # Split solution into sentences
-        solution = example['solution']
-        sentences = nltk.sent_tokenize(solution)
-        
-        if len(sentences) < 2:
-            return splits  # Not enough to split
+        problem_text = example['problem']
+        sentences = nltk.sent_tokenize(problem_text)
 
-        # Choose a random split point (or fixed N if preferred)
+        if len(sentences) < 2:
+            return splits
+
         first_part_length = random.randint(1, len(sentences) - 1)
 
-        splits['guided_prompt_part_1'] = 'Problem:\n' + example['problem'] + '\n\n' + 'Solution (beginning):\n' + ' '.join(sentences[:first_part_length])
+        splits['guided_prompt_part_1'] = ' '.join(sentences[:first_part_length])
         splits['guided_prompt_part_2'] = ' '.join(sentences[first_part_length:])
     else:
         raise(f"Error! guided_prompt_split_fn not found processing for dataset_name: {dataset_name}")
@@ -100,6 +100,21 @@ def bootstrap_test(data):
 
     return (res.bootstrap_distribution <= 0.).sum() / 10000.
 
+def process_deepseek_response(response):
+    """
+    Process responses from DeepSeek models by removing the thinking process
+    and keeping only the final answer after the </think> tag.
+    """
+    # Check if the response contains the </think> tag
+    if '</think>' in response:
+        # Split by the </think> tag and get the part after it
+        parts = response.split('</think>')
+        if len(parts) > 1:
+            # Return everything after the last </think> tag, stripped of whitespace
+            return parts[-1].strip()
+    
+    # If no </think> tag is found, return the original response
+    return response
 
 @suspend_logging
 def guided_prompt_process_fn(
@@ -122,8 +137,12 @@ def guided_prompt_process_fn(
     vars_map = {"split_name": split_name, "dataset_name": dataset_name, "first_piece": first_part, "label": label}
     general_prompt = fill_template(general_template, vars_map)
     guided_prompt = fill_template(guided_template, vars_map)
-    general_response, cost = llm.query(general_prompt)
-    guided_response, cost_ = llm.query(guided_prompt)
+    general_response_raw, cost = llm.query(general_prompt)
+    guided_response_raw, cost_ = llm.query(guided_prompt)
+    
+    # Process responses to remove thinking part
+    general_response = process_deepseek_response(general_response_raw)
+    guided_response = process_deepseek_response(guided_response_raw)
 
     # get scores
     scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
@@ -133,13 +152,14 @@ def guided_prompt_process_fn(
     # return
     example['general_score'] = general_score
     example['guided_score'] = guided_score
-    example['general_response'] = general_response
-    example['guided_response'] = guided_response
+    example['general_response_raw'] = general_response_raw  # Store the raw response too
+    example['guided_response_raw'] = guided_response_raw    # Store the raw response too
+    example['general_response'] = general_response          # Processed response
+    example['guided_response'] = guided_response            # Processed response
     example['first_part'] = first_part
     example['second_part'] = second_part
 
     return example
-
 
 def main_guided_prompting(
     eval_data: list = [],
@@ -168,10 +188,6 @@ def main_guided_prompting(
     # method-specific parameters
     guided_prompting_task_type: str = None,
 ):
-    # Import required modules for saving CSV
-    import os
-    import pandas as pd
-    from datetime import datetime
     
     # based on task type, choose prompt template
     type_str = guided_prompting_task_type
@@ -231,6 +247,8 @@ def main_guided_prompting(
     features["second_part"] = Value(dtype='string', id=None)
     features["general_prompt"] = Value(dtype='string', id=None)
     features["guided_prompt"] = Value(dtype='string', id=None)
+    features["general_response_raw"] = Value(dtype='string', id=None)
+    features["guided_response_raw"] = Value(dtype='string', id=None)
 
     # Add the prompts to the process_fn to save them
     def process_fn_with_prompts(example, idx):

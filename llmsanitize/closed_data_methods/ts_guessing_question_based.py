@@ -76,10 +76,11 @@ def build_prompt(
         prompt += "\nReply the answer only."
     else:
         # Enhanced restrictive prompt style
-        # prompt = "[INSTRUCTION: This is a strict one-word prediction task. You are required to respond with EXACTLY ONE WORD - the word that belongs in place of [MASK]. No explanations, no punctuation, no articles, no pleasantries, no sentences. JUST ONE SINGLE WORD. Violation of this format will result in task failure.]\n\n"
-        # prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output EXACTLY ONE WORD as your entire response - the word that belongs in place of [MASK]. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word.]\n\n"
-        prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output your answer as EXACTLY ONE WORD inside \\boxed{} notation. Your entire response should look like this: \\boxed{word}. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word and put it in \\boxed{}.]\n\n"
-        prompt += f"Text with masked word: {text}\n\n"
+        # prompt = "[SYSTEM INSTRUCTION: CRITICAL! This is NOT a math problem to solve. This is a MASKED WORD task ONLY. Your ONLY job is to guess what single word was replaced by [MASK]. You must output your answer as EXACTLY ONE WORD inside \\boxed{} notation. Your entire response should look like this: \\boxed{word}. DO NOT attempt to solve any problems or provide explanations. Just predict the masked word and put it in \\boxed{}.]\n\n"
+        # prompt += f"Text with masked word: {text}\n\n"
+        # original  prompt 
+        prompt = "Complete the sentence in one word:"
+        prompt += f"\n\n{text}"
         if type_hint:
             if eval_data_name == "truthful_qa":
                 example_type = example["type"]
@@ -94,10 +95,10 @@ def build_prompt(
                 prompt += f"Source hint: {example_url}\n"
         # prompt += "YOUR ANSWER (one word only): "
         # prompt += "YOUR RESPONSE (must be exactly one word): "
-        prompt += "YOUR RESPONSE (must be exactly one word in \\boxed{}): "
+        # prompt += "YOUR RESPONSE (must be exactly one word in \\boxed{}): "
+        prompt += "\nReply the answer only."
 
     return prompt, word
-
 
 def process_response(response):
     """Extract just the word from boxed notation or first word if that fails."""
