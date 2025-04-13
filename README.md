@@ -1,93 +1,76 @@
-# LLMSanitize
-An open-source library for contamination detection in NLP datasets and Large Language Models (LLMs).  
+# Benchmark Contamination Testing with LLMSanitize (Modified)
 
-## Installation
-The library has been designed and tested with **Python 3.9** and **CUDA 11.8**.  
+This repository builds upon the [LLMSanitize](https://github.com/ntunlp/LLMSanitize) framework for detecting benchmark contamination in large language models (LLMs). It adapts, extends, and evaluates contamination detection techniques on recent open-source reasoning models and math-focused datasets, such as AIME-2024 and subsets of MMLU.
 
-First make sure you have CUDA 11.8 installed, and create a conda environment with Python 3.9: 
+> **NOTE:** This is a forked and modified version of LLMSanitize for targeted experiments. For the original implementation and full methodology, please refer to:
+>
+> ```
+> @article{ravaut2024much,
+>   title={How Much are LLMs Contaminated? A Comprehensive Survey and the LLMSanitize Library},
+>   author={Ravaut, Mathieu and Ding, Bosheng and Jiao, Fangkai and Chen, Hailin and Li, Xingxuan and Zhao, Ruochen and Qin, Chengwei and Xiong, Caiming and Joty, Shafiq},
+>   journal={arXiv preprint arXiv:2404.00699},
+>   year={2024}
+> }
+> ```
+
+---
+
+## Overview
+
+This project explores contamination in LLMs by testing how well models can regenerate benchmark data under memorization-style prompting. It specifically builds on two methods from LLMSanitize:
+
+- **TS-Guessing (Testset Slot Guessing)**
+- **Guided Prompting**
+
+Modifications in this fork include:
+
+- Adapting instruction templates for math-specific benchmarks (AIME-2024)
+- Creating stricter variations of guided prompts for more faithful verbatim regeneration
+- Modifying splitting functions for MMLU and AIME to match realistic first-part/second-part decomposition
+- Automating analysis using bootstrap hypothesis testing to determine significance of contamination-like behavior
+- Logging and evaluation of models such as `DeepSeek-R1-Distill-Qwen-7B` and `Qwen2.5-Math-7B-Instruct`
+
+---
+
+## Setup Instructions
+
+### 1. Clone this repository
 ```bash
-conda create --name llmsanitize python=3.9
+git clone https://github.com/YOUR_USERNAME/test-benchmark-contamination.git
+cd test-benchmark-contamination
 ```
 
-Next activate the environment:
+### 2. Create and activate a virtual environment (optional but recommended)
 ```bash
+conda create -n llmsanitize python=3.10 -y
 conda activate llmsanitize
 ```
 
-Then install LLMSanitize from PyPI:
+Or using `venv`:
 ```bash
-pip install llmsanitize
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-Notably, we use **vllm 0.3.3**.  
-
-## Supported Methods
-The repository supports all the following contamination detection methods:
-
-| **Method** | **Use Case** | **Method Type** | **Model Access** | **Reference** |  
-|---|---|---|---|---|
-| gpt-2 | Open-data | String Matching | _ | *Language Models are Unsupervised Multitask Learners* ([link](https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)), Section 4 |
-| gpt-3 | Open-data | String Matching | _ | *Language Models are Few-Shot Learners* ([link](https://arxiv.org/abs/2005.14165)), Section 4 |
-| exact | Open-data | String Matching | _ | *Documenting Large Webtext Corpora: A Case Study on the Colossal Clean Crawled Corpus* ([link](https://arxiv.org/abs/2104.08758)), Section 4.2 |
-| palm | Open-data | String Matching | _ | *PaLM: Scaling Language Modeling with Pathways* ([link](https://arxiv.org/abs/2204.02311)), Sections 7-8 |
-| gpt-4 | Open-data | String Matching | _ | *GPT-4 Technical Report* ([link](https://arxiv.org/abs/2303.08774)), Appendix C |
-| platypus | Open-data | Embeddings Similarity | _ | *Platypus: Quick, Cheap, and Powerful Refinement of LLMs* ([link](https://arxiv.org/abs/2308.07317)), Section 2.3 |
-| guided-prompting | Closed-data | Prompt Engineering/LLM-based | Black-box | *Time Travel in LLMs: Tracing Data Contamination in Large Language Models* ([link](https://arxiv.org/abs/2308.08493)) |
-| sharded-likelihood | Closed-data | Model Likelihood | White-box | *Proving Test Set Contamination in Black-box Language Models* ([link](https://arxiv.org/abs/2310.17623)) |
-| min-prob | Closed-data | Model Likelihood | White-box | *Detecting Pretraining Data from Large Language Models* ([link](https://arxiv.org/abs/2310.16789)) |
-| cdd | Closed-data | Model Memorization/Model Likelihood | Black-box | *Generalization or Memorization: Data Contamination and Trustworthy Evaluation for Large Language Models* ([link](https://arxiv.org/abs/2402.15938)), Section 3.2 |
-| ts-guessing-question-based | Closed-data | Model Completion | Black-box | *Investigating Data Contamination in Modern Benchmarks for Large Language Models* ([link](https://arxiv.org/abs/2311.09783)), Section 3.2.1 |
-| ts-guessing-question-multichoice | Closed-data | Model Completion | Black-box | *Investigating Data Contamination in Modern Benchmarks for Large Language Models* ([link](https://arxiv.org/abs/2311.09783)), Section 3.2.2 |
-
-## vLLM
-The following methods require to launch a vLLM instance which will handle model inference:
-
-| **Method** | 
-|---|
-| guided-prompting |
-| min-prob |
-| cdd |
-| ts-guessing-question-based |
-| ts-guessing-question-multichoice |
-
-To launch the instance, first run the following command in a terminal: 
+### 3. Install dependencies
 ```bash
-sh llmsanitize/scripts/vllm_hosting.sh
+pip install -r requirements.txt
 ```
-You are required to specify a **port number** and **model name** in this shell script. 
 
-## Run Contamination Detection
-To run contamination detection, you can follow the multiple test scripts in scripts/tests/ folder.  
+---
 
-For instance, to run sharded-likelihood on Hellaswag with Llama-2-7B:
+## Usage
+
+You can run contamination evaluation for guided prompting via:
 ```bash
-sh llmsanitizescripts/tests/closed_data/sharded-likelihood/test_hellaswag.sh -m <path_to_your_llama-2-7b_folder> 
+python main.py --method guided_prompting --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --dataset HuggingFaceH4/aime_2024
 ```
 
-To run a method using vLLM like guided-prompting for instance, the only difference is to pass the port number as argument:
-```bash
-sh llmsanitizescripts/tests/closed_data/guided-prompting/test_hellaswag.sh -m <path_to_your_llama-2-7b_folder> -p <port_number_from_your_vllm_instance>
-```
+Logs will be saved with prompts, responses, and bootstrap statistics in the `output/` folder.
 
-Or, since *llmsanitize* has been installed as a Python package, you can call the detection methods directly in your Python script:
-```
-from llmsanitize ClosedDataContaminationChecker
-args = <setup your argparse here>
-contamination_checker = ClosedDataContaminationChecker(args)
-contamination_checker.run_contamination("guided-prompting") # make sure that your args contain all parameters relevant this specific method
-```
+## License
+This repository inherits the license from LLMSanitize (Apache 2.0). See `LICENSE` for details.
 
+## Acknowledgments
+Special thanks to the LLMSanitize authors and maintainers for their comprehensive framework and open-source release.
 
-## Citation
-
-If you find our paper or this project helps your research, please kindly consider citing our paper in your publication.
-
-
-```
-@article{ravaut2024much,
-  title={How Much are LLMs Contaminated? A Comprehensive Survey and the LLMSanitize Library},
-  author={Ravaut, Mathieu and Ding, Bosheng and Jiao, Fangkai and Chen, Hailin and Li, Xingxuan and Zhao, Ruochen and Qin, Chengwei and Xiong, Caiming and Joty, Shafiq},
-  journal={arXiv preprint arXiv:2404.00699},
-  year={2024}
-}
-```
