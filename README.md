@@ -36,8 +36,8 @@ Modifications in this fork include:
 
 ### 1. Clone this repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/test-benchmark-contamination.git
-cd test-benchmark-contamination
+git clone https://github.com/nate-daba/detect-benchmark-contamination.git
+cd detect-benchmark-contamination
 ```
 
 ### 2. Create and activate a virtual environment (optional but recommended)
