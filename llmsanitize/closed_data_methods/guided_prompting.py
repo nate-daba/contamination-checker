@@ -3,6 +3,7 @@ This file implements the closed_data contamination detection through guided prom
 https://arxiv.org/pdf/2308.08493.pdf
 """
 import os
+import sys
 import pandas as pd
 from datetime import datetime
 import nltk
@@ -64,14 +65,31 @@ def guided_prompt_split_fn(
     
     # Math reasoning tasks        
     elif dataset_name == 'HuggingFaceH4/aime_2024':
-        problem_text = example['problem']
+        # ONLY use the problem field, not text or anything else
+        if 'problem' in example:
+            problem_text = example['problem']
+        else:
+            problem_text = example[text_key]
+        
+        # Make sure we're only working with the problem, not solution
+        if 'Solution' in problem_text:
+            problem_text = problem_text.split('Solution', 1)[0].strip()
+        
+        # Also check for "Solution (beginning):" format
+        if 'Solution (beginning)' in problem_text:
+            problem_text = problem_text.split('Solution (beginning)', 1)[0].strip()
+        
+        # Remove any Problem: prefix if it exists
+        if problem_text.startswith('Problem:'):
+            problem_text = problem_text[len('Problem:'):].strip()
+        
         sentences = nltk.sent_tokenize(problem_text)
-
+        
         if len(sentences) < 2:
             return splits
-
+        
         first_part_length = random.randint(1, len(sentences) - 1)
-
+        
         splits['guided_prompt_part_1'] = ' '.join(sentences[:first_part_length])
         splits['guided_prompt_part_2'] = ' '.join(sentences[first_part_length:])
     else:
@@ -80,13 +98,20 @@ def guided_prompt_split_fn(
     return splits
 
 def guided_prompt_process_label(example, dataset_name):
+    new_example = example.copy()
+
     if dataset_name == 'cais/mmlu':
-        example['answer_text'] = example['choices'][int(example['answer'])]
+        new_example['answer_text'] = new_example['choices'][int(new_example['answer'])]
     elif dataset_name == 'winogrande':
-        example['answer_token'] = example['option1'] + '/' + example['option2']
+        new_example['answer_token'] = new_example['option1'] + '/' + new_example['option2']
     elif dataset_name == 'HuggingFaceH4/aime_2024':
-        example['answer_text'] = str(example['answer'])  
-    return example
+        print("\n[DEBUG in label_fn]")
+        print("Original problem:", new_example.get("problem"))
+        print("Original solution:", new_example.get("solution"))
+        print("Original answer:", new_example.get("answer"))
+        new_example['answer_text'] = str(new_example['answer'])
+
+    return new_example
 
 def bootstrap_test(data):
     ''' bootstrap test (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html)
@@ -129,14 +154,30 @@ def guided_prompt_process_fn(
     guided_template
 ):
     seed_everything(idx)
+    
+    # Debug what fields are available
+    print(f"\n[DEBUG process_fn] Keys in example: {example.keys()}")
+    print(f"[DEBUG process_fn] text_key: {text_key}")
+    print(f"[DEBUG process_fn] Original text: {example.get(text_key, 'Not found')[:100]}")
+    print(f"[DEBUG process_fn] Problem field: {example.get('problem', 'Not found')[:100]}")
+    print(f"[DEBUG process_fn] Solution field: {example.get('solution', 'Not found')[:100]}")
     label = str(example[label_key])
     first_part = example['guided_prompt_part_1']
     second_part = example['guided_prompt_part_2']
-
+    print("\n=== Guided Prompt first and second part (in guided_prompt_process_fn)  ===")
+    print("First part", first_part)
+    print("Second part", second_part)
+    print("===================================\n")
+    # sys.exit()
     # query llm
     vars_map = {"split_name": split_name, "dataset_name": dataset_name, "first_piece": first_part, "label": label}
     general_prompt = fill_template(general_template, vars_map)
     guided_prompt = fill_template(guided_template, vars_map)
+    
+    print("\n=== Guided Prompt Sent to Model ===")
+    print(guided_prompt)
+    print("===================================\n")
+    sys.exit()
     general_response_raw, cost = llm.query(general_prompt)
     guided_response_raw, cost_ = llm.query(guided_prompt)
     
@@ -165,7 +206,7 @@ def main_guided_prompting(
     eval_data: list = [],
     eval_data_name: str = None,
     eval_set_key: str = "test",
-    text_key: str = "text",
+    text_key: str = "problem",
     label_key: str = "label",
     num_proc: int = 16,
     n_eval_data_points: int = 100,
@@ -188,7 +229,13 @@ def main_guided_prompting(
     # method-specific parameters
     guided_prompting_task_type: str = None,
 ):
-    
+    # Add at the beginning of main_guided_prompting
+    print("=== ORIGINAL DATA SAMPLE ===")
+    print("First example keys:", eval_data[0].keys())
+    print("First example problem field:", eval_data[0].get("problem", "Not found"))
+    print("First example solution field:", eval_data[0].get("solution", "Not found"))
+    print("First example text field:", eval_data[0].get("text", "Not found"))
+    print("=========================")
     # based on task type, choose prompt template
     type_str = guided_prompting_task_type
     guided_template = getattr(gui_prompts, f"GUI_{type_str}")
@@ -203,7 +250,16 @@ def main_guided_prompting(
     eval_data = eval_data.map(split_fn, num_proc=num_proc, load_from_cache_file=False, with_indices=True)\
         .filter(lambda example: len(example['guided_prompt_part_1']) > 0 and len(example['guided_prompt_part_2']) > 0)\
         .map(label_fn, num_proc=num_proc)
-    
+    print("\n=== AFTER label_fn ===")
+    print("Eval keys:", eval_data[0].keys())
+    print("First piece:\n", eval_data[0]['guided_prompt_part_1'])
+    print("Second piece:\n", eval_data[0]['guided_prompt_part_2'])
+    print("Problem field:\n", eval_data[0].get("problem"))
+    print("Solution field:\n", eval_data[0].get("solution"))
+    print("Answer field:\n", eval_data[0].get("answer"))
+    print("Answer text field:\n", eval_data[0].get("answer_text"))
+    print("======================\n")
+    # sys.exit()
     logger.info(f"After filtering, {len(eval_data)} examples remaining")
     random_examples = eval_data.shuffle(seed=42).filter(lambda _, idx: idx < num_examples_to_test, with_indices=True)
     logger.info(f"Selected {len(random_examples)} examples for testing")
@@ -252,10 +308,23 @@ def main_guided_prompting(
 
     # Add the prompts to the process_fn to save them
     def process_fn_with_prompts(example, idx):
+        print("=== BEFORE TEMPLATE FILL ===")
+        print("guided_prompt_part_1:", example['guided_prompt_part_1'])
+        print("Does it contain 'Solution'?", 'Solution' in example['guided_prompt_part_1'])
+        
         vars_map = {"split_name": eval_set_key, "dataset_name": eval_data_name, 
-                   "first_piece": example['guided_prompt_part_1'], "label": str(example[label_key])}
+                "first_piece": example['guided_prompt_part_1'], "label": str(example[label_key])}
+        
+        # Check if any templates add Problem/Solution formatting
+        print("General template:", general_template[:200])
+        print("Guided template:", guided_template[:200])
+        
         example["general_prompt"] = fill_template(general_template, vars_map)
         example["guided_prompt"] = fill_template(guided_template, vars_map)
+        
+        print("=== AFTER TEMPLATE FILL ===")
+        print("Does general_prompt include 'Solution'?", 'Solution' in example["general_prompt"])
+        print("Does guided_prompt include 'Solution'?", 'Solution' in example["guided_prompt"])
         
         return process_fn(example, idx)
 

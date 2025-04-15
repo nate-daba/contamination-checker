@@ -58,7 +58,7 @@ python main.py \
 --eval_data_config_name default \
 --eval_set_key train \
 --text_key problem \
---label_key answer \
+--label_key answer_text \
 --n_eval_data_points 30 \
 --num_proc 8 \
 --method guided-prompting \
