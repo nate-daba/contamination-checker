@@ -2,6 +2,8 @@
 
 This repository builds upon the [LLMSanitize](https://github.com/ntunlp/LLMSanitize) framework for detecting benchmark contamination in large language models (LLMs). It adapts, extends, and evaluates contamination detection techniques on recent open-source reasoning models and math-focused datasets, such as AIME-2024 and subsets of MMLU.
 
+Please see the report [here](./report/report.pdf) for more details on the analysis and findings.
+
 > **NOTE:** This is a forked and modified version of LLMSanitize for targeted experiments. For the original implementation and full methodology, please refer to:
 >
 > ```
@@ -61,12 +63,12 @@ pip install -r requirements.txt
 
 ## Usage
 
-To run the `Guided Prompting` contamination detection method on the AIME-2024 dataset with a specific model, use the following command:
+To run the `Guided Prompting` contamination detection method on the AIME-2024 dataset with the `DeepSeek-R1-Distill-Qwen-7B` model, use the following command:
 ```bash
 sh tests/closed_data/guided-prompting/test_aime.sh --model=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 ```
 
-To run the `TS-Guessing` contamination detection method on the MMLU dataset (100 questions in the “high-school mathematics” category) with a specific model, use the following command:
+To run the `TS-Guessing` contamination detection method on the MMLU dataset (100 questions in the “high-school mathematics” category) with the `Qwen2.5-Math-7B-Instruct` model, use the following command:
 ```bash
 sh tests/closed_data/ts-guessing-question-based/test_mmlu.sh --model=Qwen/Qwen2.5-Math-7B-Instruct
 ```
