@@ -61,9 +61,14 @@ pip install -r requirements.txt
 
 ## Usage
 
-For example, to run the `Guided Prompting` method on the AIME-2024 dataset with a specific model, use the following command:
+To run the `Guided Prompting` contamination detection method on the AIME-2024 dataset with a specific model, use the following command:
 ```bash
 sh tests/closed_data/guided-prompting/test_aime.sh --model=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+```
+
+To run the `TS-Guessing` contamination detection method on the MMLU dataset (100 questions in the “high-school mathematics” category) with a specific model, use the following command:
+```bash
+sh tests/closed_data/ts-guessing-question-based/test_mmlu.sh --model=Qwen/Qwen2.5-Math-7B-Instruct
 ```
 
 Logs will be saved with prompts, responses, and bootstrap statistics in the `output/` folder.
