@@ -19,8 +19,8 @@ This repository builds upon the [LLMSanitize](https://github.com/ntunlp/LLMSanit
 
 This project explores contamination in LLMs by testing how well models can regenerate benchmark data under memorization-style prompting. It specifically builds on two methods from LLMSanitize:
 
-- **TS-Guessing (Testset Slot Guessing)**
-- **Guided Prompting**
+- **TS-Guessing (Testset Slot Guessing)** (introduced [here](https://arxiv.org/abs/2311.09783))
+- **Guided Prompting** (introduced [here](https://arxiv.org/abs/2308.08493))
 
 Modifications in this fork include:
 
@@ -61,9 +61,9 @@ pip install -r requirements.txt
 
 ## Usage
 
-You can run contamination evaluation for guided prompting via:
+For example, to run the `Guided Prompting` method on the AIME-2024 dataset with a specific model, use the following command:
 ```bash
-python main.py --method guided_prompting --model deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --dataset HuggingFaceH4/aime_2024
+sh tests/closed_data/guided-prompting/test_aime.sh --model=deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 ```
 
 Logs will be saved with prompts, responses, and bootstrap statistics in the `output/` folder.

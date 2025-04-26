@@ -16,17 +16,17 @@ LABEL: {label}
 SECOND PIECE:"""
 
 # guided instruction for Open QA task
-GUI_QA = """INSTRUCTION:
-You are provided with the FIRST PIECE of an instance from the {split_name} split of the {dataset_name} dataset.
-Finish the SECOND PIECE of the instance as EXACTLY appeared in the dataset.
-ONLY rely on the original form of the instance in the dataset to finish the SECOND PIECE.
+# GUI_QA = """INSTRUCTION:
+# You are provided with the FIRST PIECE of an instance from the {split_name} split of the {dataset_name} dataset.
+# Finish the SECOND PIECE of the instance as EXACTLY appeared in the dataset.
+# ONLY rely on the original form of the instance in the dataset to finish the SECOND PIECE.
 
-ANSWER: {label}
+# ANSWER: {label}
 
-FIRST PIECE:
-{first_piece}
+# FIRST PIECE:
+# {first_piece}
 
-SECOND PIECE:"""
+# SECOND PIECE:"""
 
 GUI_QA = """INSTRUCTION:
 You are given the FIRST PIECE of a sample from the {split_name} split of the {dataset_name} dataset.
